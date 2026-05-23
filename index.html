@@ -224,6 +224,50 @@
     .empty .ei { font-size:46px; margin-bottom:10px; }
     .empty p { font-size:15px; }
 
+    /* ── AI音声チャット ── */
+    .chat-btn-full {
+      background: linear-gradient(135deg,#7c3aed,#4f46e5);
+      color:white; border-radius:14px; padding:18px;
+      cursor:pointer; box-shadow:0 4px 14px rgba(124,58,237,.35);
+      transition:all .2s; user-select:none; margin-bottom:18px;
+      display:flex; align-items:center; justify-content:center; gap:12px;
+    }
+    .chat-btn-full:hover,.chat-btn-full:active { transform:translateY(-2px); box-shadow:0 8px 20px rgba(124,58,237,.45); }
+    .cbi { font-size:32px; }
+    .cbt-label { font-size:17px; font-weight:bold; }
+    .cbt-sub   { font-size:13px; opacity:.85; margin-top:2px; }
+
+    .chat-area {
+      height:calc(100vh - 230px); overflow-y:auto;
+      display:flex; flex-direction:column; gap:12px; padding-bottom:8px;
+    }
+    .chat-bubble { max-width:86%; padding:12px 16px; border-radius:18px; font-size:15px; line-height:1.75; word-break:break-word; }
+    .bubble-ai   { background:white; color:var(--text); border-radius:4px 18px 18px 18px; align-self:flex-start; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+    .bubble-user { background:var(--navy); color:white; border-radius:18px 4px 18px 18px; align-self:flex-end; }
+    .ai-label    { font-size:11px; color:#7c3aed; font-weight:bold; margin-bottom:4px; }
+
+    .chat-input-area { position:sticky; bottom:0; background:var(--gray-bg); padding:10px 0 4px; border-top:1px solid var(--border); }
+    .mic-btn {
+      width:100%; padding:18px; border:none; border-radius:14px;
+      font-size:18px; font-weight:bold; font-family:inherit; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; gap:10px;
+      background:linear-gradient(135deg,#7c3aed,#4f46e5); color:white;
+      box-shadow:0 4px 12px rgba(124,58,237,.3); transition:all .2s;
+    }
+    .mic-btn.listening { background:linear-gradient(135deg,#dc2626,#ef4444); animation:pulse 1.2s ease-in-out infinite; }
+    .mic-btn.speaking  { background:linear-gradient(135deg,#059669,#10b981); }
+    @keyframes pulse { 0%,100%{box-shadow:0 4px 12px rgba(220,38,38,.3)} 50%{box-shadow:0 4px 24px rgba(220,38,38,.7)} }
+
+    .chat-text-row { display:flex; gap:8px; margin-top:8px; }
+    .chat-text-input { flex:1; padding:12px 14px; border:2px solid var(--border); border-radius:10px; font-size:15px; font-family:inherit; outline:none; }
+    .chat-text-input:focus { border-color:#7c3aed; }
+    .chat-send-btn { padding:12px 16px; background:#7c3aed; color:white; border:none; border-radius:10px; font-size:18px; cursor:pointer; }
+    .voice-status { text-align:center; font-size:13px; color:var(--gray); margin-top:6px; min-height:18px; }
+    .typing-dot { display:inline-flex; gap:4px; padding:12px 16px; }
+    .typing-dot span { width:8px; height:8px; background:var(--gray); border-radius:50%; animation:bounce .8s infinite; }
+    .typing-dot span:nth-child(2){animation-delay:.15s} .typing-dot span:nth-child(3){animation-delay:.3s}
+    @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-8px)} }
+
     /* ── Toast ── */
     .toast {
       position:fixed; bottom:28px; left:50%;
@@ -348,6 +392,13 @@
       <span class="icon">📞</span>
       <div class="label">先生に<br>相談したい</div>
       <div class="sub">メッセージ・電話</div>
+    </div>
+  </div>
+  <div class="chat-btn-full" onclick="go('s-chat')">
+    <span class="cbi">🎙️</span>
+    <div>
+      <div class="cbt-label">AI音声チャットで質問する</div>
+      <div class="cbt-sub">話しかけるだけで書類・進捗・疑問に答えます</div>
     </div>
   </div>
   <div class="ai-note">
@@ -701,6 +752,26 @@
   </div>
 </div>
 
+<!-- =============================================== -->
+<!-- SCREEN: AI音声チャット                         -->
+<!-- =============================================== -->
+<div class="screen" id="s-chat">
+  <div class="breadcrumb">ホーム › <span class="current">AI音声チャット</span></div>
+  <div class="chat-area" id="chatArea"></div>
+  <div class="chat-input-area">
+    <button class="mic-btn" id="micBtn" onclick="toggleMic()">
+      <span id="micIcon">🎙️</span>
+      <span id="micLabel">マイクを押して話しかける</span>
+    </button>
+    <div class="voice-status" id="voiceStatus"></div>
+    <div class="chat-text-row">
+      <input class="chat-text-input" id="chatTextInput" placeholder="文字で入力することもできます"
+        onkeypress="if(event.key==='Enter')sendChatText()">
+      <button class="chat-send-btn" onclick="sendChatText()">➤</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ================================================
    デモデータ
@@ -863,6 +934,7 @@ function setHeader(sid) {
     's-consult':        ['先生に相談',''],
     's-consult-form':   ['相談フォーム',''],
     's-consult-done':   ['送信完了',''],
+    's-chat':           ['AI音声チャット','話しかけるだけで答えます'],
   };
   const t = map[sid] || ['若杉行政書士事務所',''];
   document.getElementById('hTitle').textContent = t[0];
@@ -1135,6 +1207,254 @@ function toast(msg) {
   const el = document.getElementById('toast');
   el.textContent = msg; el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+/* ================================================
+   AI 音声チャットボット
+   ================================================ */
+let recognition = null;
+let isListening = false;
+let isSpeaking  = false;
+let chatInitialized = false;
+
+/* ── チャット画面が表示された時の初期化 ── */
+function initChat() {
+  if (chatInitialized) return;
+  chatInitialized = true;
+  const greeting = CL
+    ? `こんにちは、${CL.name.split(' ')[0]}様。若杉行政書士事務所のサポートAIです。書類・進捗・費用など、何でもお気軽にご質問ください。マイクボタンを押して話しかけるか、下の入力欄に文字を入力してください。`
+    : 'こんにちは。若杉行政書士事務所のサポートAIです。ご質問はマイクボタンを押して話しかけるか、文字で入力してください。';
+  addBubble('ai', greeting);
+  speak(greeting);
+}
+
+/* ── マイクのON/OFF ── */
+function toggleMic() {
+  if (isSpeaking) { window.speechSynthesis.cancel(); isSpeaking = false; }
+  if (isListening) { stopListening(); return; }
+  startListening();
+}
+
+function startListening() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    toast('このブラウザは音声入力に対応していません。ChromeまたはEdgeをお使いください。');
+    return;
+  }
+  recognition = new SpeechRecognition();
+  recognition.lang = 'ja-JP';
+  recognition.continuous = false;
+  recognition.interimResults = true;
+
+  recognition.onstart = () => {
+    isListening = true;
+    setMicState('listening');
+    setVoiceStatus('🔴 聞いています… 話し終わったら少し待ってください');
+  };
+
+  recognition.onresult = (e) => {
+    const interim = Array.from(e.results).map(r => r[0].transcript).join('');
+    setVoiceStatus(`"${interim}"`);
+    if (e.results[e.results.length - 1].isFinal) {
+      stopListening();
+      handleUserInput(interim.trim());
+    }
+  };
+
+  recognition.onerror = (e) => {
+    stopListening();
+    if (e.error === 'no-speech') setVoiceStatus('音声が聞き取れませんでした。もう一度お試しください。');
+    else toast('音声認識エラー: ' + e.error);
+  };
+
+  recognition.onend = () => { if (isListening) stopListening(); };
+  recognition.start();
+}
+
+function stopListening() {
+  isListening = false;
+  if (recognition) { try { recognition.stop(); } catch(e){} recognition = null; }
+  setMicState('idle');
+  setVoiceStatus('');
+}
+
+function setMicState(state) {
+  const btn   = document.getElementById('micBtn');
+  const icon  = document.getElementById('micIcon');
+  const label = document.getElementById('micLabel');
+  btn.className = 'mic-btn' + (state === 'listening' ? ' listening' : state === 'speaking' ? ' speaking' : '');
+  const map = {
+    idle:      ['🎙️', 'マイクを押して話しかける'],
+    listening: ['🔴', '聞いています… (もう一度押すと停止)'],
+    speaking:  ['🔊', 'AIが回答中… (押すと停止)'],
+  };
+  icon.textContent  = map[state][0];
+  label.textContent = map[state][1];
+}
+
+function setVoiceStatus(msg) {
+  document.getElementById('voiceStatus').textContent = msg;
+}
+
+/* ── テキスト送信 ── */
+function sendChatText() {
+  const input = document.getElementById('chatTextInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  handleUserInput(text);
+}
+
+/* ── ユーザー入力を処理 ── */
+function handleUserInput(text) {
+  addBubble('user', text);
+  showTyping();
+  setTimeout(() => {
+    removeTyping();
+    const response = getAIResponse(text);
+    addBubble('ai', response);
+    speak(response);
+  }, 700);
+}
+
+/* ── チャットバブル追加 ── */
+function addBubble(role, text) {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'chat-bubble bubble-' + role;
+  if (role === 'ai') div.innerHTML = `<div class="ai-label">🤖 若杉事務所 サポートAI</div>${text}`;
+  else div.textContent = text;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+let typingEl = null;
+function showTyping() {
+  const area = document.getElementById('chatArea');
+  typingEl = document.createElement('div');
+  typingEl.className = 'chat-bubble bubble-ai';
+  typingEl.innerHTML = '<div class="ai-label">🤖 若杉事務所 サポートAI</div><div class="typing-dot"><span></span><span></span><span></span></div>';
+  area.appendChild(typingEl);
+  area.scrollTop = area.scrollHeight;
+}
+function removeTyping() {
+  if (typingEl) { typingEl.remove(); typingEl = null; }
+}
+
+/* ── 音声読み上げ ── */
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang  = 'ja-JP';
+  utter.rate  = 0.95;
+  utter.pitch = 1.05;
+
+  // 日本語の声を優先選択
+  const voices = window.speechSynthesis.getVoices();
+  const jaVoice = voices.find(v => v.lang.startsWith('ja'));
+  if (jaVoice) utter.voice = jaVoice;
+
+  utter.onstart = () => { isSpeaking = true; setMicState('speaking'); };
+  utter.onend   = () => { isSpeaking = false; setMicState('idle'); };
+  utter.onerror = () => { isSpeaking = false; setMicState('idle'); };
+  window.speechSynthesis.speak(utter);
+}
+
+/* ================================================
+   AI 回答エンジン（キーワードマッチ）
+   ================================================ */
+function getAIResponse(input) {
+  const t = input;  // ひらがな・カタカナ・漢字対応
+
+  /* 挨拶 */
+  if (/こんにちは|はじめまして|よろしく|おはよう|こんばんは/.test(t)) {
+    const name = CL ? CL.name.split(' ')[0] + '様' : 'お客様';
+    return `こんにちは、${name}。いつもありがとうございます。本日もお手伝いできることがあれば何でもお申し付けください。`;
+  }
+
+  /* 進捗・状況 */
+  if (/進捗|状況|どうなって|今どこ|どの段階|いまどこ|どこまで|経過/.test(t)) {
+    if (!CL) return '案件番号でログインすると、進捗をご確認いただけます。';
+    const cur = CL.history[CL.history.length - 1];
+    return `現在の状況は「${CL.status}」です。${cur ? `最終更新は${cur.date}で、「${cur.memo}」という状況です。` : ''}次のステップは、${CL.nextAction}詳しくは担当の先生にご確認ください。`;
+  }
+
+  /* 不足書類・足りない書類 */
+  if (/足りない|不足|まだ|未提出|出してない|足りて/.test(t)) {
+    if (!CL) return '案件番号でログインすると、不足書類をご確認いただけます。';
+    const missing = CL.documents.filter(d => d.status !== '提出済み');
+    if (missing.length === 0) return 'おめでとうございます！現在、不足している書類はすべて揃っています。担当の先生が確認・準備を進めています。';
+    const names = missing.slice(0, 3).map(d => `「${d.name}」`).join('、');
+    return `現在、${missing.length}件の書類をご準備いただく必要があります。${names}${missing.length > 3 ? 'など' : ''}です。${missing[0].note ? missing[0].note + '。' : ''}お早めにご準備いただきますと、手続きがスムーズに進みます。`;
+  }
+
+  /* 必要書類 */
+  if (/書類|必要な|提出|用意|何が|何を|準備/.test(t)) {
+    if (!CL) return '案件番号でログインすると、必要書類の一覧をご確認いただけます。';
+    const submitted = CL.documents.filter(d => d.status === '提出済み').length;
+    const total     = CL.documents.length;
+    return `${CL.category}のお手続きには、合計${total}種類の書類が必要です。現在${submitted}件が提出済みで、残り${total - submitted}件をご準備いただく状況です。詳しくはホーム画面の「必要書類を確認したい」からご覧いただけます。`;
+  }
+
+  /* 費用・料金 */
+  if (/費用|料金|いくら|お金|値段|価格/.test(t)) {
+    return `費用はお手続きの種類や難易度によって異なります。${CL ? CL.category + 'の' : ''}詳しい金額については、担当の先生に直接ご確認ください。一般的に、着手時と完了時の2回に分けてお支払いいただくことが多いです。`;
+  }
+
+  /* 期間・いつ */
+  if (/期間|いつ|どのくらい|何日|何ヶ月|完了|終わる|いつごろ/.test(t)) {
+    if (!CL) return '案件番号でログインすると、完了予定日をご確認いただけます。';
+    return `${CL.category}の完了予定は${CL.expectedDate}を目安としています。ただし、書類の状況や行政機関の審査状況によって変わることがあります。現在は「${CL.status}」の段階です。`;
+  }
+
+  /* 電話・相談・連絡 */
+  if (/相談|電話|連絡|話したい|聞きたい|問い合わせ/.test(t)) {
+    return `担当の先生への相談は、ホーム画面の「先生に相談したい」メニューからメッセージや電話希望をお送りいただけます。お急ぎの場合は、直接お電話ください。電話番号は029-846-7050、平日9時から18時まで受け付けています。`;
+  }
+
+  /* 住民票 */
+  if (/住民票/.test(t)) {
+    return `住民票は、お住まいの市区町村の役所（市役所・区役所・町村役場）の窓口でお取りいただけます。マイナンバーカードをお持ちであれば、コンビニのコピー機でも取得できます。発行から3ヶ月以内のものが必要です。`;
+  }
+
+  /* 印鑑証明 */
+  if (/印鑑証明|印鑑/.test(t)) {
+    return `印鑑証明書は、お住まいの市区町村の役所窓口、またはマイナンバーカードをお持ちであればコンビニでも取得できます。発行から3ヶ月以内のものをご用意ください。`;
+  }
+
+  /* 登記・法務局 */
+  if (/登記|法務局/.test(t)) {
+    return `登記簿謄本・登記事項証明書は、最寄りの法務局（登記所）の窓口、または「登記ねっと」というオンラインサービスでお取りいただけます。`;
+  }
+
+  /* ありがとう */
+  if (/ありがとう|助かり|感謝/.test(t)) {
+    return `こちらこそ、ありがとうございます。お手続きがスムーズに進むよう、担当の先生も全力でサポートいたします。他にご不明な点があれば、いつでもご質問ください。`;
+  }
+
+  /* デフォルト */
+  return `「${input}」についてのご質問ですね。個別の状況によって詳細が異なりますので、担当の先生に直接ご確認いただくことをお勧めします。お電話は029-846-7050（平日9時〜18時）まで。このアプリの「先生に相談したい」からメッセージを送ることもできます。`;
+}
+
+/* ── チャット画面が表示されたら初期化 ── */
+const _origRender = render;
+function render(sid) {
+  _origRender(sid);
+  if (sid === 's-chat') {
+    chatInitialized = false;
+    document.getElementById('chatArea').innerHTML = '';
+    initChat();
+  }
+}
+
+/* ── 画面を離れたら音声停止 ── */
+const _origGo = go;
+function go(sid, push=true) {
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  if (recognition) { try { recognition.stop(); } catch(e){} }
+  isListening = false; isSpeaking = false;
+  _origGo(sid, push);
 }
 
 /* ── 初期化 ── */
