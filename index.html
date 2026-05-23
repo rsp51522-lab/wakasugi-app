@@ -893,6 +893,11 @@ function loginAs(id) {
 const hist = [];
 
 function go(sid, push=true) {
+  /* 画面移動時に音声を停止 */
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  if (typeof recognition !== 'undefined' && recognition) { try { recognition.stop(); } catch(e){} }
+  if (typeof isListening !== 'undefined') isListening = false;
+  if (typeof isSpeaking  !== 'undefined') isSpeaking  = false;
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = document.getElementById(sid);
   if (!el) return;
@@ -963,6 +968,12 @@ function render(sid) {
     's-miss-add':      renderMissAdd,
   };
   if (map[sid]) map[sid]();
+  /* AIチャット画面の初期化 */
+  if (sid === 's-chat') {
+    chatInitialized = false;
+    document.getElementById('chatArea').innerHTML = '';
+    initChat();
+  }
 }
 
 function renderHome() {
@@ -1437,25 +1448,6 @@ function getAIResponse(input) {
   return `「${input}」についてのご質問ですね。個別の状況によって詳細が異なりますので、担当の先生に直接ご確認いただくことをお勧めします。お電話は029-846-7050（平日9時〜18時）まで。このアプリの「先生に相談したい」からメッセージを送ることもできます。`;
 }
 
-/* ── チャット画面が表示されたら初期化 ── */
-const _origRender = render;
-function render(sid) {
-  _origRender(sid);
-  if (sid === 's-chat') {
-    chatInitialized = false;
-    document.getElementById('chatArea').innerHTML = '';
-    initChat();
-  }
-}
-
-/* ── 画面を離れたら音声停止 ── */
-const _origGo = go;
-function go(sid, push=true) {
-  if (window.speechSynthesis) window.speechSynthesis.cancel();
-  if (recognition) { try { recognition.stop(); } catch(e){} }
-  isListening = false; isSpeaking = false;
-  _origGo(sid, push);
-}
 
 /* ── 初期化 ── */
 window.addEventListener('load', () => {
