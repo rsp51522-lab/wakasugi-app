@@ -2,8 +2,8 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>若杉行政書士事務所 お客様サポートアプリ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>若杉行政書士事務所 AIサポート</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     :root {
@@ -13,15 +13,15 @@
       --blue: #4a90d9;
       --blue-light: #e8f2fc;
       --white: #ffffff;
-      --gray-bg: #f4f6fb;
+      --gray-bg: #f0f3f9;
       --gray: #7a7a8a;
       --text: #2c2c3e;
-      --success: #27ae60;
-      --warning: #e67e22;
-      --danger: #e74c3c;
       --border: #dde3ef;
+      --ai-bubble: #ffffff;
+      --user-bubble: #1e3a6e;
     }
-    body {
+    html, body {
+      height: 100%;
       font-family: 'Hiragino Kaku Gothic ProN','ヒラギノ角ゴ ProN','Meiryo','メイリオ',sans-serif;
       background: var(--gray-bg);
       color: var(--text);
@@ -29,1521 +29,1196 @@
       line-height: 1.7;
       max-width: 480px;
       margin: 0 auto;
-      min-height: 100vh;
+    }
+
+    /* ── レイアウト ── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      height: 100vh;
     }
 
     /* ── ヘッダー ── */
     .app-header {
       background: var(--navy);
       color: white;
-      padding: 13px 14px;
-      position: sticky; top: 0; z-index: 100;
-      display: flex; align-items: center; gap: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,.25);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.3);
+      flex-shrink: 0;
+      z-index: 10;
     }
-    .back-btn {
-      background: none; border: none; color: white;
-      font-size: 20px; cursor: pointer; padding: 4px 8px;
-      display: none;
-    }
-    .back-btn.show { display: block; }
-    .header-info { flex: 1; }
-    .header-info h1 { font-size: 15px; font-weight: bold; line-height: 1.3; }
-    .header-info p  { font-size: 12px; opacity: .8; margin-top: 1px; }
-    .home-btn { background: none; border: none; color: white; font-size: 22px; cursor: pointer; }
-
-    /* ── 画面管理 ── */
-    .screen { display: none; padding: 18px 14px 32px; min-height: calc(100vh - 58px); animation: fadeUp .25s ease; }
-    .screen.active { display: block; }
-    @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-
-    /* ── ログイン ── */
-    .login-wrap { padding-top: 28px; }
-    .login-card {
-      background: white; border-radius: 18px; padding: 32px 22px;
-      box-shadow: 0 6px 24px rgba(0,0,0,.09); text-align: center;
-    }
-    .office-seal {
-      width: 82px; height: 82px; background: var(--navy); border-radius: 50%;
+    .header-logo {
+      width: 38px; height: 38px;
+      background: white;
+      border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 18px; font-size: 38px; color: white;
+      font-size: 20px;
     }
-    .login-card h2 { font-size: 19px; color: var(--navy); margin-bottom: 8px; font-weight: bold; }
-    .login-card .lead { color: var(--gray); font-size: 15px; line-height: 1.65; margin-bottom: 22px; }
-    .form-group { margin-bottom: 16px; text-align: left; }
-    .form-group label { display: block; font-size: 14px; font-weight: bold; color: var(--navy); margin-bottom: 5px; }
-    .form-group input, .form-group select, .form-group textarea {
-      width: 100%; padding: 14px 15px; border: 2px solid var(--border);
-      border-radius: 10px; font-size: 17px; font-family: inherit;
-      outline: none; transition: border-color .2s; background: white;
+    .header-info { flex: 1; }
+    .header-title {
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.2;
     }
-    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--navy); }
-    .form-group textarea { min-height: 110px; resize: vertical; }
-
-    /* ── ボタン ── */
-    .btn {
-      display: block; width: 100%; padding: 16px; border: none; border-radius: 12px;
-      font-size: 18px; font-weight: bold; font-family: inherit; cursor: pointer;
-      text-align: center; transition: all .2s; text-decoration: none; letter-spacing: .03em;
+    .header-sub {
+      font-size: 12px;
+      opacity: 0.8;
     }
-    .btn-primary  { background: var(--navy); color: white; }
-    .btn-primary:hover  { background: var(--navy-dark); }
-    .btn-outline  { background: var(--blue-light); color: var(--navy); border: 2px solid var(--navy); }
-    .btn-success  { background: var(--success); color: white; }
-    .btn-sm { padding: 10px 18px; font-size: 15px; width: auto; display: inline-block; }
-
-    /* ── ウェルカムバナー ── */
-    .welcome-banner {
-      background: linear-gradient(135deg, var(--navy), var(--navy-light));
-      color: white; border-radius: 16px; padding: 18px 18px 20px; margin-bottom: 18px;
-    }
-    .welcome-banner h2 { font-size: 19px; margin-bottom: 5px; }
-    .welcome-banner .category { font-size: 14px; opacity: .9; }
-    .status-pill {
-      display: inline-block; background: rgba(255,255,255,.2);
-      border: 1px solid rgba(255,255,255,.45); border-radius: 20px;
-      padding: 4px 14px; font-size: 13px; margin-top: 10px;
+    .online-badge {
+      background: #2ecc71;
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 20px;
+      white-space: nowrap;
     }
 
-    /* ── メインメニューグリッド ── */
-    .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-bottom: 18px; }
-    .menu-card {
-      background: white; border-radius: 14px; padding: 18px 12px;
-      text-align: center; cursor: pointer; border: 2px solid transparent;
-      box-shadow: 0 2px 10px rgba(0,0,0,.06); transition: all .2s; user-select: none;
-    }
-    .menu-card:hover, .menu-card:active {
-      border-color: var(--navy); transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(30,58,110,.15);
-    }
-    .menu-card .icon  { font-size: 34px; display: block; margin-bottom: 9px; }
-    .menu-card .label { font-size: 15px; font-weight: bold; color: var(--navy); line-height: 1.4; }
-    .menu-card .sub   { font-size: 12px; color: var(--gray); margin-top: 4px; }
-
-    /* ── サブメニューリスト ── */
-    .page-title    { font-size: 20px; font-weight: bold; color: var(--navy); margin-bottom: 4px; }
-    .page-subtitle { font-size: 14px; color: var(--gray); margin-bottom: 18px; }
-    .sub-list { display: flex; flex-direction: column; gap: 11px; }
-    .sub-item {
-      background: white; border-radius: 13px; padding: 17px 18px;
-      cursor: pointer; border: 2px solid transparent;
-      box-shadow: 0 2px 8px rgba(0,0,0,.06);
-      display: flex; align-items: center; gap: 13px;
-      transition: all .2s; user-select: none;
-    }
-    .sub-item:hover, .sub-item:active { border-color: var(--navy); background: var(--blue-light); }
-    .sub-item .si-icon  { font-size: 28px; min-width: 38px; text-align: center; }
-    .sub-item .si-body  { flex: 1; }
-    .sub-item .si-label { font-size: 16px; font-weight: bold; color: var(--navy); line-height: 1.35; }
-    .sub-item .si-desc  { font-size: 13px; color: var(--gray); margin-top: 3px; }
-    .sub-item .si-arrow { color: var(--blue); font-size: 20px; }
-
-    /* ── 情報カード ── */
-    .info-card {
-      background: white; border-radius: 14px; padding: 18px;
-      margin-bottom: 13px; box-shadow: 0 2px 8px rgba(0,0,0,.06);
-    }
-    .info-card h3 {
-      font-size: 16px; font-weight: bold; color: var(--navy);
-      margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid var(--blue-light);
+    /* ── チャットエリア ── */
+    #chatWrap {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      -webkit-overflow-scrolling: touch;
     }
 
-    /* ── 書類リスト ── */
-    .doc-row { display: flex; align-items: flex-start; gap: 11px; padding: 11px 0; border-bottom: 1px solid var(--border); }
-    .doc-row:last-child { border-bottom: none; }
-    .doc-badge { min-width: 72px; padding: 4px 6px; border-radius: 18px; font-size: 12px; font-weight: bold; text-align: center; white-space: nowrap; }
-    .badge-ok  { background: #e8f5e9; color: #1b7a3e; }
-    .badge-ng  { background: #fff3e0; color: #c0612b; }
-    .badge-fix { background: #fce4ec; color: #b71c1c; }
-    .doc-name  { font-size: 15px; color: var(--text); }
-    .doc-note  { font-size: 12px; color: var(--gray); margin-top: 3px; }
+    /* ── メッセージグループ ── */
+    .msg-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 4px;
+      animation: fadeUp 0.3s ease;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
 
-    /* ── 進捗タイムライン ── */
-    .timeline { position: relative; padding-left: 26px; }
-    .timeline::before { content:''; position:absolute; left:10px; top:0; bottom:0; width:2px; background:var(--border); }
-    .tl-item { position: relative; margin-bottom: 18px; }
-    .tl-dot { position:absolute; left:-22px; top:5px; width:14px; height:14px; border-radius:50%; border:2px solid var(--border); background:white; }
-    .tl-item.done .tl-dot    { background:var(--success); border-color:var(--success); }
-    .tl-item.current .tl-dot { background:var(--navy); border-color:var(--navy); }
-    .tl-date   { font-size: 12px; color: var(--gray); }
-    .tl-status { font-size: 16px; font-weight: bold; color: var(--text); }
-    .tl-item.current .tl-status { color: var(--navy); }
-    .tl-memo   { font-size: 13px; color: var(--gray); margin-top: 2px; }
+    /* ── バブル ── */
+    .bubble-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .bubble-row.user {
+      flex-direction: row-reverse;
+    }
+    .ai-icon {
+      width: 36px; height: 36px;
+      background: var(--navy);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      align-self: flex-end;
+    }
+    .bubble {
+      max-width: 78%;
+      padding: 13px 16px;
+      border-radius: 18px;
+      font-size: 17px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .bubble.ai {
+      background: var(--ai-bubble);
+      color: var(--text);
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+    .bubble.user {
+      background: var(--user-bubble);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
 
-    /* ── ステータスチップ ── */
-    .chip { display:inline-block; padding:6px 16px; border-radius:20px; font-size:15px; font-weight:bold; }
-    .chip-blue   { background:var(--blue-light); color:var(--navy); }
-    .chip-green  { background:#e8f5e9; color:#1b7a3e; }
-    .chip-orange { background:#fff3e0; color:#c0612b; }
-    .chip-red    { background:#fce4ec; color:#b71c1c; }
+    /* ── タイピングインジケーター ── */
+    .typing-bubble {
+      background: var(--ai-bubble);
+      border-radius: 18px;
+      border-bottom-left-radius: 4px;
+      padding: 14px 18px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .typing-dot {
+      width: 8px; height: 8px;
+      background: var(--navy);
+      border-radius: 50%;
+      animation: typing 1.2s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30%            { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* ── 選択ボタン ── */
+    .choices {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-left: 44px;
+      padding-right: 4px;
+      margin-top: 2px;
+    }
+    .choice-btn {
+      background: white;
+      border: 2px solid var(--navy);
+      color: var(--navy);
+      border-radius: 12px;
+      padding: 13px 16px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      line-height: 1.4;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .choice-btn:active {
+      transform: scale(0.97);
+    }
+    .choice-btn.disabled {
+      opacity: 0.45;
+      cursor: default;
+      pointer-events: none;
+    }
+    .choice-btn.selected {
+      background: var(--navy);
+      color: white;
+      opacity: 1;
+    }
+    .choice-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .choice-text { flex: 1; }
+
+    /* ── 日時ラベル ── */
+    .time-label {
+      text-align: center;
+      font-size: 12px;
+      color: var(--gray);
+      margin: 8px 0 4px;
+    }
+
+    /* ── 入力エリア ── */
+    .input-area {
+      background: white;
+      border-top: 1px solid var(--border);
+      padding: 10px 12px;
+      padding-bottom: max(10px, env(safe-area-inset-bottom));
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .mic-btn {
+      width: 46px; height: 46px;
+      border-radius: 50%;
+      border: 2px solid var(--navy);
+      background: white;
+      color: var(--navy);
+      font-size: 20px;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .mic-btn.recording {
+      background: #e74c3c;
+      border-color: #e74c3c;
+      color: white;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(231,76,60,.4); }
+      50%       { box-shadow: 0 0 0 8px rgba(231,76,60,0); }
+    }
+    .text-input {
+      flex: 1;
+      border: 1.5px solid var(--border);
+      border-radius: 22px;
+      padding: 11px 16px;
+      font-size: 16px;
+      font-family: inherit;
+      outline: none;
+      background: var(--gray-bg);
+      transition: border 0.2s;
+    }
+    .text-input:focus {
+      border-color: var(--navy);
+      background: white;
+    }
+    .send-btn {
+      width: 46px; height: 46px;
+      border-radius: 50%;
+      border: none;
+      background: var(--navy);
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.2s;
+    }
+    .send-btn:active { opacity: 0.7; }
+
+    /* ── ボトムシート ── */
+    .sheet-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 200;
+      display: none;
+      align-items: flex-end;
+    }
+    .sheet-overlay.open {
+      display: flex;
+    }
+    .sheet {
+      background: white;
+      width: 100%;
+      border-radius: 20px 20px 0 0;
+      padding: 24px 20px 32px;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+    .sheet-handle {
+      width: 40px; height: 4px;
+      background: #ccc;
+      border-radius: 2px;
+      margin: 0 auto 20px;
+    }
+    .sheet-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 8px;
+    }
+    .sheet-sub {
+      font-size: 15px;
+      color: var(--gray);
+      margin-bottom: 20px;
+    }
+    .sheet-input {
+      width: 100%;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 18px;
+      font-family: inherit;
+      letter-spacing: 0.1em;
+      outline: none;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .sheet-input:focus { border-color: var(--navy); }
+    .sheet-btn {
+      width: 100%;
+      background: var(--navy);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      margin-bottom: 10px;
+    }
+    .sheet-btn:active { opacity: 0.8; }
+    .sheet-btn.secondary {
+      background: white;
+      color: var(--navy);
+      border: 2px solid var(--navy);
+    }
+    .form-row {
+      margin-bottom: 14px;
+    }
+    .form-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--navy);
+      margin-bottom: 6px;
+      display: block;
+    }
+    .form-select, .form-textarea {
+      width: 100%;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 16px;
+      font-family: inherit;
+      outline: none;
+    }
+    .form-select:focus, .form-textarea:focus { border-color: var(--navy); }
+    .form-textarea { min-height: 80px; resize: vertical; }
+
+    /* ── 案件カード ── */
+    .case-card {
+      background: white;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+      margin: 6px 0 2px;
+    }
+    .case-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .case-avatar {
+      width: 44px; height: 44px;
+      background: var(--blue-light);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .case-name { font-size: 18px; font-weight: 700; }
+    .case-id { font-size: 13px; color: var(--gray); }
+    .case-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 15px;
+    }
+    .case-row:last-child { border-bottom: none; }
+    .case-key { color: var(--gray); }
+    .case-val { font-weight: 600; }
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .status-0 { background: #fef9e7; color: #d35400; }
+    .status-1 { background: #eaf7fb; color: #2980b9; }
+    .status-2 { background: #eaf7fb; color: #2980b9; }
+    .status-3 { background: #eafaf1; color: #27ae60; }
+    .status-4 { background: #f9f9f9; color: #7f8c8d; }
+    .progress-bar {
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--navy), var(--blue));
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
 
     /* ── FAQ ── */
-    .faq-card { background:white; border-radius:12px; margin-bottom:10px; box-shadow:0 2px 6px rgba(0,0,0,.05); overflow:hidden; }
+    .faq-item {
+      background: white;
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      margin: 4px 0;
+    }
     .faq-q {
-      padding:15px 16px; font-size:16px; font-weight:bold; color:var(--navy);
-      cursor:pointer; display:flex; align-items:flex-start; gap:10px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 6px;
+      font-size: 15px;
     }
-    .faq-q::before {
-      content:'Q'; background:var(--navy); color:white;
-      width:26px; height:26px; border-radius:50%;
-      display:flex; align-items:center; justify-content:center;
-      font-size:14px; font-weight:bold; min-width:26px; margin-top:1px;
-    }
-    .faq-q-text { flex:1; line-height:1.45; }
-    .faq-arrow  { margin-left:auto; transition:transform .3s; font-size:18px; color:var(--gray); min-width:18px; }
-    .faq-a { display:none; padding:0 16px 14px 52px; font-size:15px; color:var(--text); line-height:1.75; }
-    .faq-card.open .faq-a     { display:block; }
-    .faq-card.open .faq-arrow { transform:rotate(180deg); }
-
-    /* ── ネクストアクションカード ── */
-    .next-card {
-      background:linear-gradient(135deg,var(--navy),var(--navy-light));
-      color:white; border-radius:14px; padding:16px 18px; margin-bottom:14px;
-    }
-    .next-card .nc-label   { font-size:12px; opacity:.8; margin-bottom:5px; }
-    .next-card .nc-content { font-size:16px; line-height:1.7; }
-
-    /* ── アナウンスボックス ── */
-    .notice { background:var(--blue-light); border:1px solid #b3d4f0; border-radius:10px; padding:13px 15px; font-size:14px; color:var(--navy); margin-bottom:14px; line-height:1.65; }
-    .notice.ok { background:#e8f5e9; border-color:#a5d6a7; color:#1b5e20; }
-    .ai-note {
-      background:var(--blue-light); border-left:4px solid var(--navy);
-      border-radius:0 8px 8px 0; padding:11px 14px;
-      font-size:13px; color:var(--navy); margin-top:18px; line-height:1.65;
+    .faq-a {
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text);
     }
 
-    /* ── パンくず ── */
-    .breadcrumb { font-size:13px; color:var(--gray); margin-bottom:14px; display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
-    .breadcrumb .current { color:var(--navy); font-weight:bold; }
-
-    /* ── 相談フォーム ── */
-    .divider { height:1px; background:var(--border); margin:14px 0; }
-
-    /* ── 空状態 ── */
-    .empty { text-align:center; padding:38px 20px; color:var(--gray); }
-    .empty .ei { font-size:46px; margin-bottom:10px; }
-    .empty p { font-size:15px; }
-
-    /* ── AI音声チャット ── */
-    .chat-btn-full {
-      background: linear-gradient(135deg,#7c3aed,#4f46e5);
-      color:white; border-radius:14px; padding:18px;
-      cursor:pointer; box-shadow:0 4px 14px rgba(124,58,237,.35);
-      transition:all .2s; user-select:none; margin-bottom:18px;
-      display:flex; align-items:center; justify-content:center; gap:12px;
+    /* ── 料金テーブル ── */
+    .fee-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      margin: 4px 0;
     }
-    .chat-btn-full:hover,.chat-btn-full:active { transform:translateY(-2px); box-shadow:0 8px 20px rgba(124,58,237,.45); }
-    .cbi { font-size:32px; }
-    .cbt-label { font-size:17px; font-weight:bold; }
-    .cbt-sub   { font-size:13px; opacity:.85; margin-top:2px; }
-
-    .chat-area {
-      height:calc(100vh - 230px); overflow-y:auto;
-      display:flex; flex-direction:column; gap:12px; padding-bottom:8px;
+    .fee-table th {
+      background: var(--navy);
+      color: white;
+      padding: 10px 12px;
+      text-align: left;
     }
-    .chat-bubble { max-width:86%; padding:12px 16px; border-radius:18px; font-size:15px; line-height:1.75; word-break:break-word; }
-    .bubble-ai   { background:white; color:var(--text); border-radius:4px 18px 18px 18px; align-self:flex-start; box-shadow:0 2px 8px rgba(0,0,0,.08); }
-    .bubble-user { background:var(--navy); color:white; border-radius:18px 4px 18px 18px; align-self:flex-end; }
-    .ai-label    { font-size:11px; color:#7c3aed; font-weight:bold; margin-bottom:4px; }
-
-    .chat-input-area { position:sticky; bottom:0; background:var(--gray-bg); padding:10px 0 4px; border-top:1px solid var(--border); }
-    .mic-btn {
-      width:100%; padding:18px; border:none; border-radius:14px;
-      font-size:18px; font-weight:bold; font-family:inherit; cursor:pointer;
-      display:flex; align-items:center; justify-content:center; gap:10px;
-      background:linear-gradient(135deg,#7c3aed,#4f46e5); color:white;
-      box-shadow:0 4px 12px rgba(124,58,237,.3); transition:all .2s;
+    .fee-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
     }
-    .mic-btn.listening { background:linear-gradient(135deg,#dc2626,#ef4444); animation:pulse 1.2s ease-in-out infinite; }
-    .mic-btn.speaking  { background:linear-gradient(135deg,#059669,#10b981); }
-    @keyframes pulse { 0%,100%{box-shadow:0 4px 12px rgba(220,38,38,.3)} 50%{box-shadow:0 4px 24px rgba(220,38,38,.7)} }
-
-    .chat-text-row { display:flex; gap:8px; margin-top:8px; }
-    .chat-text-input { flex:1; padding:12px 14px; border:2px solid var(--border); border-radius:10px; font-size:15px; font-family:inherit; outline:none; }
-    .chat-text-input:focus { border-color:#7c3aed; }
-    .chat-send-btn { padding:12px 16px; background:#7c3aed; color:white; border:none; border-radius:10px; font-size:18px; cursor:pointer; }
-    .voice-status { text-align:center; font-size:13px; color:var(--gray); margin-top:6px; min-height:18px; }
-    .typing-dot { display:inline-flex; gap:4px; padding:12px 16px; }
-    .typing-dot span { width:8px; height:8px; background:var(--gray); border-radius:50%; animation:bounce .8s infinite; }
-    .typing-dot span:nth-child(2){animation-delay:.15s} .typing-dot span:nth-child(3){animation-delay:.3s}
-    @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-8px)} }
-
-    /* ── Toast ── */
-    .toast {
-      position:fixed; bottom:28px; left:50%;
-      transform:translateX(-50%) translateY(80px);
-      background:#333; color:white; padding:11px 22px;
-      border-radius:28px; font-size:15px; z-index:9999;
-      transition:transform .3s; white-space:nowrap; pointer-events:none;
-    }
-    .toast.show { transform:translateX(-50%) translateY(0); }
-
-    /* ── ステップ表示 ── */
-    .step-row {
-      display:flex; align-items:flex-start; gap:12px; padding:10px;
-      border-radius:10px; margin-bottom:8px;
-    }
-    .step-num {
-      width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-      color:white; font-size:14px; font-weight:bold; min-width:28px;
-    }
-    .step-text { font-size:16px; padding-top:4px; flex:1; line-height:1.5; }
+    .fee-table tr:last-child td { border-bottom: none; }
   </style>
 </head>
 <body>
-
-<header class="app-header" id="appHeader">
-  <button class="back-btn" id="backBtn" onclick="goBack()">◀</button>
-  <div class="header-info">
-    <h1 id="hTitle">若杉行政書士事務所</h1>
-    <p  id="hSub">お客様サポートアプリ</p>
-  </div>
-  <button class="home-btn" onclick="gotoHome()" title="ホームへ">🏠</button>
-</header>
-
-<div class="toast" id="toast"></div>
-
-<!-- =============================================== -->
-<!-- SCREEN: ログイン                               -->
-<!-- =============================================== -->
-<div class="screen active" id="s-login">
-  <div class="login-wrap">
-    <div class="login-card">
-      <div class="office-seal">⚖️</div>
-      <h2>行政書士 若杉事務所<br>お客様サポートアプリ</h2>
-      <p class="lead">担当者よりお伝えした<br>「案件番号」を入力してください</p>
-      <div class="form-group">
-        <label>案件番号（例：WK-001）</label>
-        <input type="text" id="loginId" placeholder="WK-001"
-          style="text-transform:uppercase;letter-spacing:3px;font-size:22px;text-align:center;"
-          onkeypress="if(event.key==='Enter')doLogin()">
-      </div>
-      <button class="btn btn-primary" onclick="doLogin()">ログインする</button>
-      <div class="divider"></div>
-      <p style="font-size:13px;color:var(--gray);">案件番号がわからない方は<br>TEL: <strong>029-846-7050</strong> にお電話ください</p>
+<div id="app">
+  <!-- ヘッダー -->
+  <header class="app-header">
+    <div class="header-logo">⚖️</div>
+    <div class="header-info">
+      <div class="header-title">若杉行政書士事務所</div>
+      <div class="header-sub">AIサポートアシスタント</div>
     </div>
-    <div style="text-align:center;margin-top:18px;">
-      <button class="btn btn-outline btn-sm" onclick="go('s-demo')">デモ体験（サンプルデータで試す）</button>
-    </div>
+    <div class="online-badge">24時間対応</div>
+  </header>
+
+  <!-- チャットエリア -->
+  <div id="chatWrap"></div>
+
+  <!-- 入力エリア -->
+  <div class="input-area">
+    <button class="mic-btn" id="micBtn" onclick="toggleMic()" title="音声入力">🎤</button>
+    <input class="text-input" id="textInput" type="text" placeholder="ご質問をどうぞ…"
+      onkeydown="if(event.key==='Enter')sendText()">
+    <button class="send-btn" onclick="sendText()" title="送信">➤</button>
   </div>
 </div>
 
-<!-- =============================================== -->
-<!-- SCREEN: デモ選択                               -->
-<!-- =============================================== -->
-<div class="screen" id="s-demo">
-  <p class="page-title">デモ体験</p>
-  <p class="page-subtitle">サンプルのお客様でアプリを体験できます</p>
-  <div class="sub-list">
-    <div class="sub-item" onclick="loginAs('WK-001')">
-      <span class="si-icon">🏗️</span>
-      <div class="si-body"><div class="si-label">田中 太郎 さん</div><div class="si-desc">建設業許可 ・ 書類確認中</div></div>
-      <span class="si-arrow">›</span>
-    </div>
-    <div class="sub-item" onclick="loginAs('WK-002')">
-      <span class="si-icon">🛂</span>
-      <div class="si-body"><div class="si-label">李 美華 さん</div><div class="si-desc">在留資格申請 ・ 申請準備中</div></div>
-      <span class="si-arrow">›</span>
-    </div>
-    <div class="sub-item" onclick="loginAs('WK-003')">
-      <span class="si-icon">🏢</span>
-      <div class="si-body"><div class="si-label">佐藤 花子 さん</div><div class="si-desc">会社設立 ・ 相談受付</div></div>
-      <span class="si-arrow">›</span>
-    </div>
+<!-- 案件番号シート -->
+<div class="sheet-overlay" id="caseSheet" onclick="if(event.target===this)closeSheet('caseSheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">📋 案件番号を入力</div>
+    <div class="sheet-sub">担当者からお伝えした「WK-」から始まる番号を入力してください</div>
+    <input class="sheet-input" id="caseInput" type="text" placeholder="例：WK-001"
+      onkeydown="if(event.key==='Enter')submitCase()">
+    <button class="sheet-btn" onclick="submitCase()">確認する</button>
+    <button class="sheet-btn secondary" onclick="closeSheet('caseSheet')">キャンセル</button>
   </div>
 </div>
 
-<!-- =============================================== -->
-<!-- SCREEN: ホーム                                 -->
-<!-- =============================================== -->
-<div class="screen" id="s-home">
-  <div class="welcome-banner">
-    <h2 id="wName">こんにちは、田中様</h2>
-    <div class="category" id="wCategory">建設業許可 のお手続きをサポートしています</div>
-    <div class="status-pill" id="wStatus">📋 書類確認中</div>
-  </div>
-  <div class="menu-grid">
-    <div class="menu-card" onclick="go('s-docs')">
-      <span class="icon">📄</span>
-      <div class="label">必要書類を<br>確認したい</div>
-      <div class="sub">先生に提出する書類</div>
+<!-- 相談予約シート -->
+<div class="sheet-overlay" id="consultSheet" onclick="if(event.target===this)closeSheet('consultSheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">📅 無料相談のお申込み</div>
+    <div class="sheet-sub">お気軽にどうぞ。後ほど担当者よりご連絡いたします。</div>
+    <div class="form-row">
+      <label class="form-label">お名前</label>
+      <input class="sheet-input" id="consultName" type="text" placeholder="例：田中 太郎" style="text-align:left">
     </div>
-    <div class="menu-card" onclick="go('s-flow')">
-      <span class="icon">🗺️</span>
-      <div class="label">手続きの流れを<br>知りたい</div>
-      <div class="sub">申請の手順を確認</div>
+    <div class="form-row">
+      <label class="form-label">電話番号</label>
+      <input class="sheet-input" id="consultPhone" type="tel" placeholder="例：029-XXX-XXXX" style="text-align:left">
     </div>
-    <div class="menu-card" onclick="go('s-progress')">
-      <span class="icon">📊</span>
-      <div class="label">今の進捗を<br>確認したい</div>
-      <div class="sub">現在の状況を確認</div>
-    </div>
-    <div class="menu-card" onclick="go('s-missing')">
-      <span class="icon">⚠️</span>
-      <div class="label">不足書類を<br>確認したい</div>
-      <div class="sub">まだ足りない書類</div>
-    </div>
-    <div class="menu-card" onclick="go('s-faq')">
-      <span class="icon">💬</span>
-      <div class="label">よくある質問<br>を見る</div>
-      <div class="sub">費用・期間など</div>
-    </div>
-    <div class="menu-card" onclick="go('s-consult')">
-      <span class="icon">📞</span>
-      <div class="label">先生に<br>相談したい</div>
-      <div class="sub">メッセージ・電話</div>
-    </div>
-  </div>
-  <div class="chat-btn-full" onclick="go('s-chat')">
-    <span class="cbi">🎙️</span>
-    <div>
-      <div class="cbt-label">AI音声チャットで質問する</div>
-      <div class="cbt-sub">話しかけるだけで書類・進捗・疑問に答えます</div>
-    </div>
-  </div>
-  <div class="ai-note">
-    ℹ️ このアプリでご案内する内容は一般的な情報です。個別の状況によって異なる場合がありますので、詳しくは担当の先生にご確認ください。
-  </div>
-</div>
-
-<!-- =============================================== -->
-<!-- SCREEN: 必要書類 メニュー                      -->
-<!-- =============================================== -->
-<div class="screen" id="s-docs">
-  <div class="breadcrumb">ホーム › <span class="current">必要書類</span></div>
-  <p class="page-title">📄 必要書類の確認</p>
-  <p class="page-subtitle">先生に提出する書類を確認できます</p>
-  <div class="sub-list">
-    <div class="sub-item" onclick="go('s-docs-all')">
-      <span class="si-icon">📋</span>
-      <div class="si-body"><div class="si-label">これから準備する書類を見たい</div><div class="si-desc">必要な書類すべての一覧</div></div>
-      <span class="si-arrow">›</span>
-    </div>
-    <div class="sub-item" onclick="go('s-docs-miss')">
-      <span class="si-icon">❗</span>
-      <div class="si-body"><div class="si-label">まだ足りない書類を見たい</div><div class="si-desc">未提出・再提出が必要な書類</div></div>
-      <span class="si-arrow">›</span>
-    </div>
-    <div class="sub-item" onclick="go('s-docs-howto')">
-      <span class="si-icon">✏️</span>
-      <div class="si-body"><div class="si-label">書類の書き方・取り方を知りたい</div><div class="si-desc">各書類の入手方法・注意点</div></div>
-      <span class="si-arrow">›</span>
-    </div>
-  </div>
-</div>
-
-<!-- =============================================== -->
-<!-- SCREEN: 書類一覧                               -->
-<!-- =============================================== -->
-<div class="screen" id="s-docs-all">
-  <div class="breadcrumb">ホーム › 必要書類 › <span class="current">書類一覧</span></div>
-  <p class="page-title">📋 必要書類一覧</p>
-  <p class="page-subtitle">先生に提出するすべての書類です</p>
-  <div class="info-card">
-    <h3>書類と提出状況</h3>
-    <div id="docsAllList"></div>
-  </div>
-  <div class="notice">
-    📌 「✓ 提出済み」以外の書類はお早めにご準備ください。書類の内容や取得方法がわからない場合は遠慮なくご相談ください。
-  </div>
-  <div class="ai-note">ℹ️ 書類の内容は個別の状況によって変わることがあります。わからないことは担当の先生にご相談ください。</div>
-</div>
-
-<!-- =============================================== -->
-<!-- SCREEN: 不足書類（書類メニューから）           -->
-<!-- =============================================== -->
-<div class="screen" id="s-docs-miss">
-  <div class="breadcrumb">ホーム › 必要書類 › <span class="current">不足書類</span></div>
-  <p class="page-title">❗ まだ足りない書類</p>
-  <p class="page-subtitle">急いで準備が必要な書類です</p>
-  <div class="info-card"><h3>未提出・再提出が必要な書類</h3><div id="docsMissList"></div></div>
-  <div class="next-card">
-    <div class="nc-label">📍 次にやること</div>
-    <div class="nc-content" id="nextAction1">ご準備をお願いします</div>
-  </div>
-  <div class="ai-note">ℹ️ 書類が揃うと担当の先生が内容を確認し、申請準備に進みます。ご不明な点は遠慮なくご連絡ください。</div>
-</div>
-
-<!-- =============================================== -->
-<!-- SCREEN: 書類の書き方                           -->
-<!-- =============================================== -->
-<div class="screen" id="s-docs-howto">
-  <div class="breadcrumb">ホーム › 必要書類 › <span class="current">書類の書き方・取り方</span></div>
-  <p class="page-title">✏️ 書類の入手方法・注意点</p>
-  <p class="page-subtitle">よく使われる書類の取り方をご案内します</p>
-  <div id="howtoList"></div>
-  <div class="ai-note">ℹ️ 書類の取得方法や注意事項は、お住まいの市区町村や状況によって異なる場合があります。詳しくは担当の先生にご確認ください。</div>
-</div>
-
-<!-- =============================================== -->
-<!-- SCREEN: 手続きの流れ メニュー                  -->
-<!-- =============================================== -->
-<div class="screen" id="s-flow">
-  <div class="breadcrumb">ホーム › <span class="current">手続きの流れ</span></div>
-  <p class="page-title">🗺️ 手続きの流れ</p>
-  <p class="page-subtitle">申請の手順を確認できます</p>
-  <div class="sub-list">
-    <div class="sub-item" onclick="go('s-flow-all')">
-      <span class="si-icon">📌</span>
-      <div class="si-body"><div class="si-label">全体の流れを知りたい</div><div class="si-desc">最初から完了までのステップ</div></div>
-      <span class="si-arrow">›</span>
-    </div>
-    <div class="sub-item" onclick="go('s-flow-apply')">
-      <span class="si-icon">📮</span>
-      <div class="si-body"><div class="si-label">申請までの流れを知りたい</div><div class="si-desc">書類準備から申請提出まで</div></div>
-      <span class="si-arrow">›</span>
-    </div>
-    <div class="sub-item" onclick="go('s-flow-period')">
-      <span class="si-icon">📅</span>
-      <div class="si-body"><div class="si-label">許可が出るまでの期間を知りたい</div><div class="si-desc">審査にかかる時間の目安</div></div>
-      <span class="si-arrow">›</span>
-    </div>
-  </div>
-</div>
-
-<!-- =============================================== -->
-<!-- SCREEN: 全体の流れ                             -->
-<!-- =============================================== -->
-<div class="screen" id="s-flow-all">
-  <div class="breadcrumb">ホーム › 手続きの流れ › <span class="current">全体の流れ</span></div>
-  <p class="page-title">📌 全体の流れ</p>
-  <div id="flowAllContent"></div>
-</div>
-
-<!-- =============================================== -->
-<!-- SCREEN: 申請までの流れ                         -->
-<!-- =============================================== -->
-<div class="screen" id="s-flow-apply">
-  <div class="breadcrumb">ホーム › 手続きの流れ › <span class="current">申請まで</span></div>
-  <p class="page-title">📮 申請までの流れ</p>
-  <div id="flowApplyContent"></div>
-</div>
-
-<!-- =============================================== -->
-<!-- SCREEN: 期間の目安                             -->
-<!-- =============================================== -->
-<div class="screen" id="s-flow-period">
-  <div class="breadcrumb">ホーム › 手続きの流れ › <span class="current">期間の目安</span></div>
-  <p class="page-title">📅 期間の目安</p>
-  <div id="flowPeriodContent"></div>
-</div>
-
-<!-- =============================================== -->
-<!-- SCREEN: 進捗確認 メニュー                      -->
-<!-- =============================================== -->
-<div class="screen" id="s-progress">
-  <div class="breadcrumb">ホーム › <span class="current">進捗確認</span></div>
-  <p class="page-title">📊 進捗確認</p>
-  <p class="page-subtitle">現在のお手続き状況を確認できます</p>
-  <div class="sub-list">
-    <div class="sub-item" onclick="go('s-progress-now')">
-      <span class="si-icon">🔍</span>
-      <div class="si-body"><div class="si-label">今どの段階か知りたい</div><div class="si-desc">現在のステータスを確認</div></div>
-      <span class="si-arrow">›</span>
-    </div>
-    <div class="sub-item" onclick="go('s-progress-next')">
-      <span class="si-icon">➡️</span>
-      <div class="si-body"><div class="si-label">次に何をするか知りたい</div><div class="si-desc">お客様が行う次のアクション</div></div>
-      <span class="si-arrow">›</span>
-    </div>
-    <div class="sub-item" onclick="go('s-progress-date')">
-      <span class="si-icon">🎯</span>
-      <div class="si-body"><div class="si-label">完了予定を確認したい</div><div class="si-desc">申請・許可の見込み時期</div></div>
-      <span class="si-arrow">›</span>
-    </div>
-  </div>
-</div>
-
-<!-- =============================================== -->
-<!-- SCREEN: 現在の状況                             -->
-<!-- =============================================== -->
-<div class="screen" id="s-progress-now">
-  <div class="breadcrumb">ホーム › 進捗確認 › <span class="current">現在の状況</span></div>
-  <p class="page-title">🔍 現在の状況</p>
-  <div id="progressNowContent"></div>
-</div>
-
-<!-- =============================================== -->
-<!-- SCREEN: 次にやること                           -->
-<!-- =============================================== -->
-<div class="screen" id="s-progress-next">
-  <div class="breadcrumb">ホーム › 進捗確認 › <span class="current">次にやること</span></div>
-  <p class="page-title">➡️ 次にやること</p>
-  <div id="progressNextContent"></div>
-</div>
-
-<!-- =============================================== -->
-<!-- SCREEN: 完了予定                               -->
-<!-- =============================================== -->
-<div class="screen" id="s-progress-date">
-  <div class="breadcrumb">ホーム › 進捗確認 › <span class="current">完了予定</span></div>
-  <p class="page-title">🎯 完了予定について</p>
-  <div id="progressDateContent"></div>
-</div>
-
-<!-- =============================================== -->
-<!-- SCREEN: 不足書類 メニュー                      -->
-<!-- =============================================== -->
-<div class="screen" id="s-missing">
-  <div class="breadcrumb">ホーム › <span class="current">不足書類</span></div>
-  <p class="page-title">⚠️ 不足書類の確認</p>
-  <p class="page-subtitle">急いで準備が必要な書類を確認できます</p>
-  <div class="sub-list">
-    <div class="sub-item" onclick="go('s-miss-pending')">
-      <span class="si-icon">📤</span>
-      <div class="si-body"><div class="si-label">未提出の書類を確認したい</div><div class="si-desc">まだ出していない書類の一覧</div></div>
-      <span class="si-arrow">›</span>
-    </div>
-    <div class="sub-item" onclick="go('s-miss-resubmit')">
-      <span class="si-icon">🔄</span>
-      <div class="si-body"><div class="si-label">再提出が必要な書類を確認したい</div><div class="si-desc">修正が必要な書類</div></div>
-      <span class="si-arrow">›</span>
-    </div>
-    <div class="sub-item" onclick="go('s-miss-add')">
-      <span class="si-icon">➕</span>
-      <div class="si-body"><div class="si-label">追加で必要な書類を確認したい</div><div class="si-desc">新たに必要になった書類</div></div>
-      <span class="si-arrow">›</span>
-    </div>
-  </div>
-</div>
-
-<!-- =============================================== -->
-<!-- SCREEN: 未提出 / 再提出 / 追加                 -->
-<!-- =============================================== -->
-<div class="screen" id="s-miss-pending">
-  <div class="breadcrumb">ホーム › 不足書類 › <span class="current">未提出</span></div>
-  <p class="page-title">📤 未提出の書類</p>
-  <div class="info-card"><h3>まだ提出されていない書類</h3><div id="missPendingList"></div></div>
-  <div class="ai-note">ℹ️ 書類が揃い次第、担当の先生にご提出ください。郵送・持参どちらでも可能です。</div>
-</div>
-
-<div class="screen" id="s-miss-resubmit">
-  <div class="breadcrumb">ホーム › 不足書類 › <span class="current">再提出</span></div>
-  <p class="page-title">🔄 再提出が必要な書類</p>
-  <div class="info-card"><h3>修正・再提出が必要な書類</h3><div id="missResubmitList"></div></div>
-  <div class="ai-note">ℹ️ 修正内容がわからない場合は、遠慮なく担当の先生にお問い合わせください。</div>
-</div>
-
-<div class="screen" id="s-miss-add">
-  <div class="breadcrumb">ホーム › 不足書類 › <span class="current">追加書類</span></div>
-  <p class="page-title">➕ 追加で必要な書類</p>
-  <div class="info-card"><h3>新たに必要になった書類</h3><div id="missAddList"></div></div>
-</div>
-
-<!-- =============================================== -->
-<!-- SCREEN: よくある質問 メニュー                  -->
-<!-- =============================================== -->
-<div class="screen" id="s-faq">
-  <div class="breadcrumb">ホーム › <span class="current">よくある質問</span></div>
-  <p class="page-title">💬 よくある質問</p>
-  <p class="page-subtitle">よくいただくご質問にお答えします</p>
-  <div class="sub-list">
-    <div class="sub-item" onclick="showFaq('cost')">
-      <span class="si-icon">💴</span>
-      <div class="si-body"><div class="si-label">費用について</div><div class="si-desc">料金・お支払い方法など</div></div>
-      <span class="si-arrow">›</span>
-    </div>
-    <div class="sub-item" onclick="showFaq('period')">
-      <span class="si-icon">⏱️</span>
-      <div class="si-body"><div class="si-label">期間について</div><div class="si-desc">申請・審査にかかる時間</div></div>
-      <span class="si-arrow">›</span>
-    </div>
-    <div class="sub-item" onclick="showFaq('docs')">
-      <span class="si-icon">📑</span>
-      <div class="si-body"><div class="si-label">書類について</div><div class="si-desc">書類の準備・提出方法など</div></div>
-      <span class="si-arrow">›</span>
-    </div>
-    <div class="sub-item" onclick="showFaq('general')">
-      <span class="si-icon">❓</span>
-      <div class="si-body"><div class="si-label">その他のご質問</div><div class="si-desc">よくある一般的な疑問</div></div>
-      <span class="si-arrow">›</span>
-    </div>
-  </div>
-</div>
-
-<!-- =============================================== -->
-<!-- SCREEN: FAQ 詳細                               -->
-<!-- =============================================== -->
-<div class="screen" id="s-faq-detail">
-  <div class="breadcrumb">ホーム › よくある質問 › <span class="current" id="faqCatName">費用</span></div>
-  <p class="page-title" id="faqDetailTitle">💴 費用について</p>
-  <div id="faqDetailList"></div>
-  <div class="ai-note">ℹ️ 上記はよくある一般的な回答です。個別の状況によって異なりますので、詳しくは担当の先生にご確認ください。</div>
-</div>
-
-<!-- =============================================== -->
-<!-- SCREEN: 相談 メニュー                          -->
-<!-- =============================================== -->
-<div class="screen" id="s-consult">
-  <div class="breadcrumb">ホーム › <span class="current">先生に相談</span></div>
-  <p class="page-title">📞 先生に相談したい</p>
-  <p class="page-subtitle">ご希望の相談方法を選んでください</p>
-  <div class="sub-list">
-    <div class="sub-item" onclick="openConsultForm('message')">
-      <span class="si-icon">✉️</span>
-      <div class="si-body"><div class="si-label">メッセージを送る</div><div class="si-desc">ご質問をテキストで送信</div></div>
-      <span class="si-arrow">›</span>
-    </div>
-    <div class="sub-item" onclick="openConsultForm('phone')">
-      <span class="si-icon">📱</span>
-      <div class="si-body"><div class="si-label">電話希望を伝える</div><div class="si-desc">折り返し電話をお願いする</div></div>
-      <span class="si-arrow">›</span>
-    </div>
-    <div class="sub-item" onclick="openConsultForm('meeting')">
-      <span class="si-icon">🤝</span>
-      <div class="si-body"><div class="si-label">面談希望を伝える</div><div class="si-desc">事務所での面談を希望する</div></div>
-      <span class="si-arrow">›</span>
-    </div>
-  </div>
-</div>
-
-<!-- =============================================== -->
-<!-- SCREEN: 相談フォーム                           -->
-<!-- =============================================== -->
-<div class="screen" id="s-consult-form">
-  <div class="breadcrumb">ホーム › 相談 › <span class="current" id="cfTitle">メッセージ</span></div>
-  <p class="page-title" id="cfHeading">✉️ メッセージを送る</p>
-  <div class="info-card">
-    <div class="form-group">
-      <label>件名（任意）</label>
-      <input type="text" id="cfSubject" placeholder="例：登記簿謄本の取り方について">
-    </div>
-    <div class="form-group">
-      <label id="cfContentLabel">ご質問・ご連絡内容</label>
-      <textarea id="cfContent" placeholder="例：登記簿謄本はどこで取得できますか？"></textarea>
-    </div>
-    <div class="form-group" id="cfPhoneGroup" style="display:none">
-      <label>ご都合のよい時間帯</label>
-      <select id="cfPhoneTime">
+    <div class="form-row">
+      <label class="form-label">ご相談内容</label>
+      <select class="form-select" id="consultType">
         <option value="">-- 選択してください --</option>
-        <option>午前中（9:00〜12:00）</option>
-        <option>午後前半（13:00〜15:00）</option>
-        <option>午後後半（15:00〜17:00）</option>
-        <option>いつでも構いません</option>
+        <option value="相続・遺言">相続・遺言・遺産整理</option>
+        <option value="建設業許可">建設業許可</option>
+        <option value="在留資格">在留資格・ビザ申請</option>
+        <option value="会社設立">会社設立</option>
+        <option value="古物商">古物商許可</option>
+        <option value="飲食店">飲食店営業許可</option>
+        <option value="その他">その他</option>
       </select>
     </div>
-    <div class="form-group" id="cfMeetingGroup" style="display:none">
-      <label>ご希望の日程（任意）</label>
-      <input type="date" id="cfMeetingDate">
+    <div class="form-row">
+      <label class="form-label">ご希望日時（任意）</label>
+      <textarea class="form-textarea" id="consultNote" placeholder="例：平日午後がご都合よいです"></textarea>
     </div>
-    <button class="btn btn-primary" onclick="submitConsult()">送信する</button>
-  </div>
-  <div class="notice">
-    📞 お急ぎの場合は直接お電話ください<br>
-    TEL: <strong>029-846-7050</strong>（平日 9:00〜18:00）
-  </div>
-</div>
-
-<!-- =============================================== -->
-<!-- SCREEN: 送信完了                               -->
-<!-- =============================================== -->
-<div class="screen" id="s-consult-done">
-  <div style="text-align:center;padding:40px 20px;">
-    <div style="font-size:62px;margin-bottom:18px;">✅</div>
-    <h2 style="font-size:22px;color:var(--navy);margin-bottom:10px;">送信しました</h2>
-    <p style="font-size:16px;color:var(--gray);line-height:1.85;margin-bottom:28px;">
-      ご連絡ありがとうございます。<br>
-      担当の先生より折り返しご連絡します。<br><br>
-      お急ぎの場合は<br>
-      <strong style="color:var(--navy);font-size:18px;">029-846-7050</strong><br>
-      にお電話ください。
-    </p>
-    <button class="btn btn-primary" onclick="gotoHome()">ホームに戻る</button>
-  </div>
-</div>
-
-<!-- =============================================== -->
-<!-- SCREEN: AI音声チャット                         -->
-<!-- =============================================== -->
-<div class="screen" id="s-chat">
-  <div class="breadcrumb">ホーム › <span class="current">AI音声チャット</span></div>
-  <div class="chat-area" id="chatArea"></div>
-  <div class="chat-input-area">
-    <button class="mic-btn" id="micBtn" onclick="toggleMic()">
-      <span id="micIcon">🎙️</span>
-      <span id="micLabel">マイクを押して話しかける</span>
-    </button>
-    <div class="voice-status" id="voiceStatus"></div>
-    <div class="chat-text-row">
-      <input class="chat-text-input" id="chatTextInput" placeholder="文字で入力することもできます"
-        onkeypress="if(event.key==='Enter')sendChatText()">
-      <button class="chat-send-btn" onclick="sendChatText()">➤</button>
-    </div>
+    <button class="sheet-btn" onclick="submitConsult()">申込む</button>
+    <button class="sheet-btn secondary" onclick="closeSheet('consultSheet')">キャンセル</button>
   </div>
 </div>
 
 <script>
-/* ================================================
-   デモデータ
-   ================================================ */
-const DEMO = {
-  clients: [
-    {
-      id: "WK-001", name: "田中 太郎", category: "建設業許可",
-      status: "書類確認中", startDate: "2026-05-01", expectedDate: "2026-07-31",
-      documents: [
-        {name:"住民票（本人）",         status:"提出済み", note:""},
-        {name:"登記簿謄本（法人）",     status:"未提出",   note:"最寄りの法務局でお取りください"},
-        {name:"財務諸表（直近3期分）",  status:"要再提出", note:"代表者の押印が必要です"},
-        {name:"工事経歴書",            status:"提出済み", note:""},
-        {name:"誓約書",               status:"未提出",   note:"事務所にてご記入いただけます"},
-        {name:"専任技術者の資格証明書", status:"提出済み", note:""},
-      ],
-      nextAction:"財務諸表の修正版（代表者印押印済み）をご提出ください。登記簿謄本は最寄りの法務局でお取りいただけます。",
-      notes:"建設業一般許可（土木工事業）",
-      history:[
-        {date:"2026-05-01",status:"相談受付",      memo:"初回面談完了"},
-        {date:"2026-05-10",status:"必要書類案内中", memo:"書類リストをお渡しました"},
-        {date:"2026-05-18",status:"書類回収中",     memo:"住民票・工事経歴書・資格証明書を受領"},
-        {date:"2026-05-22",status:"書類確認中",     memo:"財務諸表に不備あり、再提出依頼"},
-      ]
-    },
-    {
-      id: "WK-002", name: "李 美華", category: "在留資格・ビザ申請",
-      status: "申請準備中", startDate: "2026-04-15", expectedDate: "2026-06-30",
-      documents: [
-        {name:"パスポートコピー",       status:"提出済み", note:""},
-        {name:"在留カードコピー（表裏）",status:"提出済み", note:""},
-        {name:"雇用契約書",            status:"提出済み", note:""},
-        {name:"会社の登記事項証明書",   status:"提出済み", note:""},
-        {name:"住民税の課税証明書",     status:"提出済み", note:""},
-        {name:"証明写真（4cm×3cm）",   status:"未提出",   note:"背景白の証明写真をご用意ください"},
-      ],
-      nextAction:"証明写真（4cm×3cm、背景白）をご用意いただき、事務所へお持ちください。",
-      notes:"就労ビザ（技術・人文知識・国際業務）更新申請",
-      history:[
-        {date:"2026-04-15",status:"相談受付",     memo:"面談実施"},
-        {date:"2026-04-20",status:"必要書類案内中",memo:"書類リスト送付"},
-        {date:"2026-05-10",status:"書類回収中",    memo:"書類収集開始"},
-        {date:"2026-05-20",status:"申請準備中",    memo:"書類確認完了、申請書類作成中"},
-      ]
-    },
-    {
-      id: "WK-003", name: "佐藤 花子", category: "会社設立",
-      status: "相談受付", startDate: "2026-05-20", expectedDate: "2026-07-15",
-      documents: [
-        {name:"代表者の印鑑証明書",    status:"未提出", note:"市区町村役場でお取りください"},
-        {name:"定款（原案）",          status:"未提出", note:"先生と一緒に作成します"},
-        {name:"資本金の払込証明書類",  status:"未提出", note:"銀行口座への入金後に作成"},
-        {name:"発起人の印鑑証明書",    status:"未提出", note:""},
-      ],
-      nextAction:"まず印鑑証明書をお取りいただき、次回面談の日程をご調整ください。",
-      notes:"株式会社設立（資本金300万円）",
-      history:[
-        {date:"2026-05-20",status:"相談受付",memo:"初回面談。事業内容・資本金額を確認"},
-      ]
-    }
-  ],
-  faqs: [
-    {id:1,cat:"cost",    q:"費用はいくらかかりますか？",              a:"費用はお手続きの種類や難易度によって異なります。事前にお見積もりをご提示しますので、ご安心ください。まずは無料相談をご利用いただき、詳しい費用をご確認ください。"},
-    {id:2,cat:"cost",    q:"費用のお支払いはいつですか？",             a:"一般的に、着手時と完了時の2回に分けてお支払いいただくことが多いです。お支払いのタイミングは、ご依頼時に担当の先生からご説明します。"},
-    {id:3,cat:"cost",    q:"役所への申請手数料は別途かかりますか？",   a:"はい、役所への申請手数料（収入印紙代など）は、行政書士報酬とは別に必要です。具体的な金額は手続きの種類によって異なりますので、担当の先生にご確認ください。"},
-    {id:4,cat:"period",  q:"申請からどのくらいで許可が出ますか？",     a:"手続きの種類によって異なります。建設業許可は概ね1〜2ヶ月、在留資格は2〜3ヶ月が目安です。ただし、書類の不備や行政側の審査状況によって変わることがあります。詳しくは担当の先生にご確認ください。"},
-    {id:5,cat:"period",  q:"書類が揃ってから申請まで何日かかりますか？",a:"書類が揃い次第、担当の先生が内容を確認して申請書類を作成します。通常1〜2週間程度ですが、お手続きの複雑さによって異なります。"},
-    {id:6,cat:"period",  q:"急いでいるのですが、対応できますか？",     a:"ご状況をお聞きした上で、できる限り対応いたします。まずは担当の先生にご相談ください。ただし、行政機関の審査期間は短縮できないことをご了承ください。"},
-    {id:7,cat:"docs",    q:"書類はコピーで大丈夫ですか？",             a:"書類によって原本が必要なものとコピーで可能なものがあります。住民票や登記簿謄本などは原本が必要な場合が多いです。詳しくは担当の先生にご確認ください。"},
-    {id:8,cat:"docs",    q:"住民票はどこで取れますか？",               a:"お住まいの市区町村の役所（市役所・区役所・町村役場）の窓口でお取りいただけます。マイナンバーカードがあればコンビニでも取得できます。発行から3ヶ月以内のものが必要です。"},
-    {id:9,cat:"docs",    q:"書類を郵送してもいいですか？",             a:"郵送でのご提出も可能です。重要書類は書留郵便をお勧めします。郵送先や注意点は担当の先生にご確認ください。"},
-    {id:10,cat:"general",q:"許可が取れなかった場合はどうなりますか？", a:"万が一不許可となった場合は、担当の先生から状況をご説明し、対応方法についてご相談します。行政機関への申請手数料は原則として返金されません。"},
-    {id:11,cat:"general",q:"相談は何回でもできますか？",               a:"ご依頼期間中は、お手続きに関するご質問はお気軽にご相談ください。このアプリのメッセージ機能かお電話（029-846-7050）をご利用ください。"},
-    {id:12,cat:"general",q:"他の行政書士には頼めませんか？",           a:"もちろんご自由にお選びいただけます。ただ、すでにお手続きが始まっている場合は引き継ぎの確認が必要です。まずは担当の先生にご相談ください。"},
-  ],
-  consultations: []
-};
+// ──────────────────────────────────────────────
+// 状態管理
+// ──────────────────────────────────────────────
+let awaitingCase = false;
+let awaitingConsult = false;
+let currentClient = null;
 
-/* ================================================
-   LocalStorage
-   ================================================ */
-function initData() {
-  if (!localStorage.getItem('wk_init')) {
-    ls('wk_clients', DEMO.clients);
-    ls('wk_faqs', DEMO.faqs);
-    ls('wk_consultations', DEMO.consultations);
-    localStorage.setItem('wk_init','1');
+// ──────────────────────────────────────────────
+// AI 知識ベース（若杉事務所HPより）
+// ──────────────────────────────────────────────
+const AI_KB = {
+  greeting: {
+    text: `こんにちは！若杉行政書士事務所のAIアシスタントです 😊\n\nどのようなことでお困りでしょうか？\nお気軽にご相談ください。`,
+    choices: [
+      { icon: '📜', text: '相続・遺言のご相談' },
+      { icon: '🏢', text: '建設業許可・会社設立' },
+      { icon: '📋', text: '依頼中の案件を確認する' }
+    ]
+  },
+
+  souzoku: {
+    text: `相続・遺言についてですね。\n若杉事務所では相続から遺産整理まで\nトータルでサポートいたします。\n\nどちらをお知りになりたいですか？`,
+    choices: [
+      { icon: '💴', text: '費用・料金を知りたい' },
+      { icon: '📋', text: '必要な書類を知りたい' },
+      { icon: '🗓️', text: '無料相談を申込む' }
+    ]
+  },
+
+  souzoku_fee: {
+    text: `【相続・遺言の料金目安】\n\n▼ 遺言書作成\n・公正証書遺言（単独）：70,000円〜\n・公正証書遺言（夫婦同時）：120,000円〜\n・自筆証書遺言のサポート：55,000円〜\n\n▼ 相続トータルサポート\n・基本料金：200,000円〜\n・金融資産の0.5%が加算されます\n\n※ 初回相談は無料です。まずはお気軽にご連絡ください。`,
+    choices: [
+      { icon: '🗓️', text: '無料相談を申込む' },
+      { icon: '📋', text: '必要書類を確認する' },
+      { icon: '🔙', text: '相続・遺言メニューへ戻る' }
+    ]
+  },
+
+  souzoku_docs: {
+    text: `【相続手続きに必要な書類】\n\n・被相続人の戸籍謄本（出生〜死亡）\n・相続人全員の戸籍謄本\n・遺産分割協議書（相続人全員の印鑑証明付き）\n・不動産登記事項証明書\n・固定資産評価証明書\n・預貯金残高証明書\n\n収集が大変な場合は、当事務所で代行いたします。\nまずはご相談ください。`,
+    choices: [
+      { icon: '🗓️', text: '無料相談を申込む' },
+      { icon: '💴', text: '費用を確認する' },
+      { icon: '🔙', text: '相続・遺言メニューへ戻る' }
+    ]
+  },
+
+  souzoku_flow: {
+    text: `【相続手続きの流れ】\n\n① 相談日時の決定（お電話・メールで）\n② 相談（事務所または出張）\n③ お見積もりのご提示\n④ 委任契約の締結\n⑤ 業務開始\n⑥ 完了・清算\n\n目安期間：約1〜3ヶ月\n\n出張相談も無料で承ります。\nご自宅やご都合の良い場所にお伺いします。`,
+    choices: [
+      { icon: '🗓️', text: '無料相談を申込む' },
+      { icon: '💴', text: '費用を確認する' },
+      { icon: '📋', text: '必要書類を確認する' }
+    ]
+  },
+
+  kensetsu: {
+    text: `建設業許可についてですね。\n新規取得から更新・変更まで対応しております。\n\nどちらをお知りになりたいですか？`,
+    choices: [
+      { icon: '💴', text: '費用・料金を知りたい' },
+      { icon: '📋', text: '申請の流れを知りたい' },
+      { icon: '🗓️', text: '無料相談を申込む' }
+    ]
+  },
+
+  kensetsu_fee: {
+    text: `【建設業許可の料金目安】\n\n・報酬：100,000〜150,000円\n・知事許可申請手数料：90,000円\n（大臣許可は150,000円）\n\n▼ 審査期間\n・約1〜2ヶ月\n\n要件の確認から書類収集まで\nすべてお任せいただけます。`,
+    choices: [
+      { icon: '🗓️', text: '無料相談を申込む' },
+      { icon: '📋', text: '申請の流れを確認する' },
+      { icon: '🔙', text: '許認可メニューへ戻る' }
+    ]
+  },
+
+  visa: {
+    text: `在留資格・ビザ申請についてですね。\n経営管理ビザや就労ビザなど\n各種在留資格に対応しています。\n\nどちらをお知りになりたいですか？`,
+    choices: [
+      { icon: '💴', text: '費用・料金を知りたい' },
+      { icon: '📋', text: '必要書類を知りたい' },
+      { icon: '🗓️', text: '無料相談を申込む' }
+    ]
+  },
+
+  visa_fee: {
+    text: `【在留資格・ビザ申請の料金目安】\n\n・報酬：50,000〜150,000円\n（ビザの種類により異なります）\n\n▼ 審査期間\n・約2〜3ヶ月\n\n外国語資料の翻訳・作成も\nサポートいたします。`,
+    choices: [
+      { icon: '🗓️', text: '無料相談を申込む' },
+      { icon: '📋', text: '必要書類を確認する' },
+      { icon: '🔙', text: '許認可メニューへ戻る' }
+    ]
+  },
+
+  kaisha: {
+    text: `会社設立についてですね。\n株式会社・合同会社（LLC）どちらも\nサポートしております。\n\nどちらをお知りになりたいですか？`,
+    choices: [
+      { icon: '💴', text: '費用・料金を知りたい' },
+      { icon: '📋', text: '設立の流れを知りたい' },
+      { icon: '🗓️', text: '無料相談を申込む' }
+    ]
+  },
+
+  kaisha_fee: {
+    text: `【会社設立の料金目安】\n\n・報酬：50,000〜100,000円\n・法務局登録免許税：150,000円（株式会社）\n  ／60,000円（合同会社）\n・公証役場定款認証費用：約52,000円（株式会社のみ）\n\n▼ 期間\n・約2〜3週間\n\n設立後の許認可手続きも\n引き続きサポートできます。`,
+    choices: [
+      { icon: '🗓️', text: '無料相談を申込む' },
+      { icon: '📋', text: '設立の流れを確認する' },
+      { icon: '🔙', text: '許認可メニューへ戻る' }
+    ]
+  },
+
+  others: {
+    text: `その他の許認可についてですね。\nよくご依頼いただくものをご案内します。`,
+    choices: [
+      { icon: '🎎', text: '古物商許可' },
+      { icon: '🍜', text: '飲食店営業許可' },
+      { icon: '🏢', text: '会社設立' }
+    ]
+  },
+
+  kobutsu: {
+    text: `【古物商許可の料金目安】\n\n・報酬：30,000〜50,000円\n・申請手数料：19,000円\n\n▼ 審査期間\n・約40日\n\nネット販売（フリマアプリ等）でも\n古物商許可が必要な場合があります。\nお気軽にご相談ください。`,
+    choices: [
+      { icon: '🗓️', text: '無料相談を申込む' },
+      { icon: '🔙', text: 'その他許認可へ戻る' },
+      { icon: '🏠', text: 'トップへ戻る' }
+    ]
+  },
+
+  inshoku: {
+    text: `【飲食店営業許可の料金目安】\n\n・報酬：50,000〜80,000円\n・申請手数料：約16,000〜21,000円\n\n▼ 審査期間\n・約2週間〜1ヶ月\n\n食品衛生責任者の設置も\n必要です。資格取得のご案内も\nいたします。`,
+    choices: [
+      { icon: '🗓️', text: '無料相談を申込む' },
+      { icon: '🔙', text: 'その他許認可へ戻る' },
+      { icon: '🏠', text: 'トップへ戻る' }
+    ]
+  },
+
+  mycase: {
+    text: `案件の進捗確認ですね。\n担当者からお伝えした\n「案件番号（WK-XXX）」を\nご入力ください。`,
+    choices: [
+      { icon: '🔑', text: '案件番号を入力する' },
+      { icon: '📞', text: '電話で確認する（029-846-7050）' },
+      { icon: '🔙', text: 'トップへ戻る' }
+    ]
+  },
+
+  consult: {
+    text: `無料相談のお申込みをいただきます。\nご都合の良いお時間に、事務所または\nご自宅へ伺うことも可能です。\n\n以下からお申込みください。`,
+    choices: [
+      { icon: '📝', text: '相談フォームに入力する' },
+      { icon: '📞', text: '電話で予約する（029-846-7050）' },
+      { icon: '🔙', text: 'トップへ戻る' }
+    ]
+  },
+
+  tel: {
+    text: `お電話でのお問い合わせはこちらです。\n\n📞 029-846-7050\n\n受付時間：平日 9:00〜18:00\n\n※ 時間外はAIアシスタントが\n　 ご対応いたします。`,
+    choices: [
+      { icon: '🗓️', text: '無料相談を申込む' },
+      { icon: '🏠', text: 'トップへ戻る' },
+      { icon: '📋', text: '依頼中の案件を確認する' }
+    ]
+  },
+
+  fallback: {
+    text: `ご質問ありがとうございます。\n詳しくは担当者にお伝えするか、\n下記のメニューからお選びください。`,
+    choices: [
+      { icon: '📜', text: '相続・遺言のご相談' },
+      { icon: '🏢', text: '建設業許可・会社設立' },
+      { icon: '🗓️', text: '無料相談を申込む' }
+    ]
   }
-}
-function ls(k, v) { if(v!==undefined) localStorage.setItem(k,JSON.stringify(v)); else return JSON.parse(localStorage.getItem(k)||'[]'); }
-function getClients() { return ls('wk_clients'); }
-function getFaqs()    { return ls('wk_faqs'); }
-function getConsults(){ return ls('wk_consultations'); }
-function saveConsults(d){ ls('wk_consultations',d); }
+};
 
-/* ================================================
-   現在のお客様
-   ================================================ */
-let CL = null; // 現在ログイン中のお客様
+// ──────────────────────────────────────────────
+// AI応答ロジック
+// ──────────────────────────────────────────────
+function getAIResponse(input) {
+  const s = input.replace(/\s/g, '').toLowerCase();
 
-function doLogin() {
-  const id = document.getElementById('loginId').value.trim().toUpperCase();
-  if (!id) { toast('案件番号を入力してください'); return; }
-  loginAs(id);
-}
-function loginAs(id) {
-  const c = getClients().find(c => c.id === id);
-  if (!c) { toast('案件番号が見つかりません。ご確認ください。'); return; }
-  CL = c;
-  localStorage.setItem('wk_current', id);
-  renderHome();
-  go('s-home');
-}
+  // 挨拶
+  if (/^(こんにちは|おはよう|こんばんは|はじめまして|よろしく|hello|hi)/.test(s))
+    return AI_KB.greeting;
 
-/* ================================================
-   画面遷移
-   ================================================ */
-const hist = [];
+  // トップへ戻る
+  if (/トップ|最初|はじめ|ホーム/.test(s))
+    return AI_KB.greeting;
 
-function go(sid, push=true) {
-  /* 画面移動時に音声を停止 */
-  if (window.speechSynthesis) window.speechSynthesis.cancel();
-  if (typeof recognition !== 'undefined' && recognition) { try { recognition.stop(); } catch(e){} }
-  if (typeof isListening !== 'undefined') isListening = false;
-  if (typeof isSpeaking  !== 'undefined') isSpeaking  = false;
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const el = document.getElementById(sid);
-  if (!el) return;
-  el.classList.add('active');
-  if (push) hist.push(sid);
-  setHeader(sid);
-  window.scrollTo(0, 0);
-  render(sid);
-}
-function goBack() {
-  if (hist.length > 1) { hist.pop(); go(hist[hist.length-1], false); }
-}
-function gotoHome() {
-  hist.length = 0; hist.push('s-home'); go('s-home', false);
-}
-function setHeader(sid) {
-  const map = {
-    's-login':          ['若杉行政書士事務所','お客様サポートアプリ'],
-    's-demo':           ['デモ体験','サンプルデータで確認'],
-    's-home':           ['若杉行政書士事務所','お客様サポートアプリ'],
-    's-docs':           ['必要書類の確認',''],
-    's-docs-all':       ['必要書類一覧',''],
-    's-docs-miss':      ['不足書類',''],
-    's-docs-howto':     ['書類の書き方・取り方',''],
-    's-flow':           ['手続きの流れ',''],
-    's-flow-all':       ['全体の流れ',''],
-    's-flow-apply':     ['申請までの流れ',''],
-    's-flow-period':    ['期間の目安',''],
-    's-progress':       ['進捗確認',''],
-    's-progress-now':   ['現在の状況',''],
-    's-progress-next':  ['次にやること',''],
-    's-progress-date':  ['完了予定',''],
-    's-missing':        ['不足書類の確認',''],
-    's-miss-pending':   ['未提出の書類',''],
-    's-miss-resubmit':  ['再提出の書類',''],
-    's-miss-add':       ['追加書類',''],
-    's-faq':            ['よくある質問',''],
-    's-faq-detail':     ['よくある質問',''],
-    's-consult':        ['先生に相談',''],
-    's-consult-form':   ['相談フォーム',''],
-    's-consult-done':   ['送信完了',''],
-    's-chat':           ['AI音声チャット','話しかけるだけで答えます'],
-  };
-  const t = map[sid] || ['若杉行政書士事務所',''];
-  document.getElementById('hTitle').textContent = t[0];
-  document.getElementById('hSub').textContent   = t[1];
-  const showBack = !['s-login','s-home'].includes(sid);
-  document.getElementById('backBtn').classList.toggle('show', showBack);
-}
-
-/* ================================================
-   各画面の描画
-   ================================================ */
-function render(sid) {
-  if (!CL) return;
-  const map = {
-    's-docs-all':      renderDocsAll,
-    's-docs-miss':     renderDocsMiss,
-    's-docs-howto':    renderDocsHowto,
-    's-flow-all':      renderFlowAll,
-    's-flow-apply':    renderFlowApply,
-    's-flow-period':   renderFlowPeriod,
-    's-progress-now':  renderProgressNow,
-    's-progress-next': renderProgressNext,
-    's-progress-date': renderProgressDate,
-    's-miss-pending':  renderMissPending,
-    's-miss-resubmit': renderMissResubmit,
-    's-miss-add':      renderMissAdd,
-  };
-  if (map[sid]) map[sid]();
-  /* AIチャット画面の初期化 */
-  if (sid === 's-chat') {
-    chatInitialized = false;
-    document.getElementById('chatArea').innerHTML = '';
-    initChat();
+  // 相続・遺言
+  if (/相続|遺言|遺産|相続人|遺族/.test(s)) {
+    if (/費用|料金|いくら|値段|price/.test(s)) return AI_KB.souzoku_fee;
+    if (/書類|必要|準備/.test(s)) return AI_KB.souzoku_docs;
+    if (/流れ|手順|ステップ|プロセス/.test(s)) return AI_KB.souzoku_flow;
+    return AI_KB.souzoku;
   }
+
+  // 建設業
+  if (/建設|工事|許可/.test(s)) {
+    if (/費用|料金|いくら/.test(s)) return AI_KB.kensetsu_fee;
+    return AI_KB.kensetsu;
+  }
+
+  // 在留・ビザ
+  if (/在留|ビザ|visa|外国人|国籍|就労/.test(s)) {
+    if (/費用|料金|いくら/.test(s)) return AI_KB.visa_fee;
+    return AI_KB.visa;
+  }
+
+  // 会社設立
+  if (/会社|設立|法人|株式|合同/.test(s)) {
+    if (/費用|料金|いくら/.test(s)) return AI_KB.kaisha_fee;
+    return AI_KB.kaisha;
+  }
+
+  // 古物商
+  if (/古物|フリマ|メルカリ|リサイクル/.test(s))
+    return AI_KB.kobutsu;
+
+  // 飲食
+  if (/飲食|レストラン|カフェ|食品|食堂/.test(s))
+    return AI_KB.inshoku;
+
+  // その他許認可
+  if (/許認可|許可|その他/.test(s))
+    return AI_KB.others;
+
+  // 案件確認
+  if (/案件|進捗|状況|確認|ログイン/.test(s))
+    return AI_KB.mycase;
+
+  // 案件番号ショートカット
+  if (/wk[-－]?\d+/i.test(input))
+    return { text: `案件番号を確認します。`, choices: [] };
+
+  // 相談予約
+  if (/相談|予約|申込|申し込|面談/.test(s))
+    return AI_KB.consult;
+
+  // 料金一般
+  if (/費用|料金|値段|いくら|price/.test(s)) {
+    return {
+      text: `料金のお問い合わせですね。\nどのサービスについてお知りになりたいですか？`,
+      choices: [
+        { icon: '📜', text: '相続・遺言の費用' },
+        { icon: '🏢', text: '建設業許可の費用' },
+        { icon: '🌐', text: 'ビザ・在留資格の費用' }
+      ]
+    };
+  }
+
+  // 電話
+  if (/電話|tel|連絡先|番号|029/.test(s))
+    return AI_KB.tel;
+
+  return AI_KB.fallback;
 }
 
-function renderHome() {
-  if (!CL) return;
-  const firstName = CL.name.split(' ')[0];
-  document.getElementById('wName').textContent     = `こんにちは、${firstName}様`;
-  document.getElementById('wCategory').textContent = `${CL.category} のお手続きをサポートしています`;
-  document.getElementById('wStatus').textContent   = `📋 ${CL.status}`;
+// ──────────────────────────────────────────────
+// チャット描画
+// ──────────────────────────────────────────────
+function nowStr() {
+  const d = new Date();
+  return `${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
 }
 
-/* ── 書類関連 ── */
-function badgeHtml(s) {
-  if (s==='提出済み') return '<span class="doc-badge badge-ok">✓ 提出済み</span>';
-  if (s==='要再提出') return '<span class="doc-badge badge-fix">！ 要修正</span>';
-  return '<span class="doc-badge badge-ng">● 未提出</span>';
-}
-function docRowHtml(d) {
-  return `<div class="doc-row">${badgeHtml(d.status)}<div><div class="doc-name">${d.name}</div>${d.note?`<div class="doc-note">💡 ${d.note}</div>`:''}</div></div>`;
-}
-
-function renderDocsAll() {
-  document.getElementById('docsAllList').innerHTML = CL.documents.map(docRowHtml).join('');
-}
-function renderDocsMiss() {
-  const docs = CL.documents.filter(d => d.status !== '提出済み');
-  document.getElementById('docsMissList').innerHTML = docs.length ? docs.map(docRowHtml).join('') : emptyHtml('✅','不足書類はありません！');
-  document.getElementById('nextAction1').textContent = CL.nextAction;
+function appendUser(text) {
+  const chat = document.getElementById('chatWrap');
+  const g = document.createElement('div');
+  g.className = 'msg-group';
+  g.innerHTML = `
+    <div class="bubble-row user">
+      <div class="bubble user">${escHtml(text)}</div>
+    </div>`;
+  chat.appendChild(g);
+  scrollBottom();
 }
 
-const HOWTO = {
-  '住民票':         '市区町村の役所窓口またはコンビニ（マイナンバーカード使用）で取得できます。発行から3ヶ月以内のものが必要です。',
-  '印鑑証明書':     '市区町村の役所窓口またはコンビニ（マイナンバーカード使用）で取得できます。発行から3ヶ月以内のものが必要です。',
-  '登記簿謄本':     '最寄りの法務局（登記所）の窓口またはオンライン申請（登記ねっと）で取得できます。',
-  '登記事項証明書': '最寄りの法務局の窓口またはオンライン申請で取得できます。',
-  '財務諸表':       '税理士・顧問会計士にご相談ください。損益計算書・貸借対照表等が必要です。',
-  'パスポート':     'お手元のパスポートをコピーしてください。有効期限内のものをご用意ください。',
-  '在留カード':     'お手元の在留カードをコピーしてください。表裏両面が必要です。',
-  '課税証明書':     '市区町村の役所窓口でお取りいただけます。マイナンバーカードでコンビニ取得も可能です。',
-  '写真':           '証明写真機（スピード写真）またはカメラ店でお撮りいただけます。背景は白が必要です。',
-};
-function renderDocsHowto() {
-  document.getElementById('howtoList').innerHTML = CL.documents.map(d => {
-    const key = Object.keys(HOWTO).find(k => d.name.includes(k));
-    const how = key ? HOWTO[key] : '担当の先生にご確認ください。';
-    return `<div class="info-card"><h3>${d.name}</h3><p style="font-size:15px;line-height:1.75;">${how}</p></div>`;
-  }).join('');
-}
-
-/* ── 手続きの流れ ── */
-const FLOWS = {
-  '建設業許可': {
-    steps:['①ご相談・ヒアリング','②必要書類のご案内','③書類の準備・収集','④書類の確認','⑤申請書類の作成','⑥県庁への申請','⑦審査','⑧許可証の受領'],
-    apply:['書類がすべて揃う','担当行政書士が内容を確認（約1週間）','申請書類を作成','県庁の窓口に申請','受付番号をお知らせ'],
-    period:'書類が揃ってから申請まで約1〜2週間、申請後の審査に約1〜2ヶ月かかります。合計で概ね2〜3ヶ月が目安です。'
-  },
-  '在留資格・ビザ申請': {
-    steps:['①ご相談・現状確認','②必要書類のご案内','③書類の準備','④書類確認・申請書作成','⑤入国管理局への申請','⑥審査','⑦許可通知','⑧新在留カード受領'],
-    apply:['必要書類がすべて揃う','申請書類の最終確認','入国管理局に申請','申請受理証明書をお渡し'],
-    period:'書類が揃ってから申請まで約1〜2週間、申請後の審査に約2〜3ヶ月かかります。'
-  },
-  '会社設立': {
-    steps:['①ご相談・基本事項決定','②定款の作成','③定款の認証（公証役場）','④資本金の払込','⑤法務局への登記申請','⑥各種届出（税務・社保等）','⑦設立完了'],
-    apply:['定款を公証役場で認証','資本金を銀行口座に払込','法務局に登記申請','登記完了（約1〜2週間）'],
-    period:'書類が揃ってから設立完了まで約2〜3週間が目安です。'
-  },
-};
-function getFlow() { return FLOWS[CL.category] || {steps:['①ご相談','②書類準備','③申請','④審査','⑤完了'],apply:['書類が揃う','内容確認','申請','完了'],period:'担当の先生にご確認ください。'}; }
-
-function renderFlowAll() {
-  const f = getFlow();
-  const doneIdx = CL.history.length - 1;
-  const html = `
-    <div class="info-card">
-      <h3>${CL.category} の全体の流れ</h3>
-      ${f.steps.map((s,i) => {
-        const done = i < doneIdx, cur = i === doneIdx;
-        return `<div class="step-row" style="background:${cur?'var(--blue-light)':done?'#f0faf4':'var(--gray-bg)'};border:2px solid ${cur?'var(--navy)':'transparent'}">
-          <div class="step-num" style="background:${cur?'var(--navy)':done?'var(--success)':'#ccc'}">${done?'✓':i+1}</div>
-          <div class="step-text" style="font-weight:${cur?'bold':'normal'};color:${cur?'var(--navy)':'var(--text)'}">${s}${cur?' ← 現在ここ':''}</div>
-        </div>`;
-      }).join('')}
-    </div>
-    <div class="ai-note">ℹ️ 書類の状況や行政機関の混雑状況によって、流れが変わることがあります。</div>`;
-  document.getElementById('flowAllContent').innerHTML = html;
-}
-function renderFlowApply() {
-  const f = getFlow();
-  document.getElementById('flowApplyContent').innerHTML = `
-    <div class="info-card">
-      <h3>申請までの流れ</h3>
-      ${f.apply.map((s,i) => `<div class="step-row" style="background:var(--gray-bg)"><div class="step-num" style="background:var(--navy)">${i+1}</div><div class="step-text">${s}</div></div>`).join('')}
-    </div>
-    <div class="notice">📌 書類の不備や修正があると申請まで時間がかかります。書類はできるだけ早くご準備ください。</div>`;
-}
-function renderFlowPeriod() {
-  const f = getFlow();
-  document.getElementById('flowPeriodContent').innerHTML = `
-    <div class="info-card"><h3>期間の目安</h3><p style="font-size:16px;line-height:1.85;">${f.period}</p></div>
-    <div class="info-card"><h3>完了予定日（目安）</h3>
-      <p style="font-size:22px;font-weight:bold;color:var(--navy);">${CL.expectedDate}</p>
-      <p style="font-size:13px;color:var(--gray);margin-top:6px;">※書類の状況によって変わる場合があります</p>
-    </div>
-    <div class="ai-note">ℹ️ 行政機関の審査期間は状況によって変わることがあります。詳しくは担当の先生にご確認ください。</div>`;
-}
-
-/* ── 進捗 ── */
-const CHIP_MAP = {
-  '相談受付':'chip-blue','必要書類案内中':'chip-blue','書類回収中':'chip-orange',
-  '書類確認中':'chip-orange','申請準備中':'chip-orange','申請済み':'chip-green',
-  '審査中':'chip-orange','許可完了':'chip-green','追加書類依頼中':'chip-red','完了':'chip-green'
-};
-function renderProgressNow() {
-  const h = CL.history; const cur = h[h.length-1];
-  document.getElementById('progressNowContent').innerHTML = `
-    <div class="info-card">
-      <h3>現在のステータス</h3>
-      <div style="text-align:center;padding:16px 0;">
-        <span class="chip ${CHIP_MAP[CL.status]||'chip-blue'}" style="font-size:20px;padding:10px 24px;">${CL.status}</span>
-      </div>
-      <p style="font-size:14px;color:var(--gray);text-align:center;">最終更新：${cur.date}</p>
-    </div>
-    <div class="info-card">
-      <h3>これまでの経緯</h3>
-      <div class="timeline">
-        ${h.map((item,i) => {
-          const isCur = i===h.length-1, isDone = i<h.length-1;
-          return `<div class="tl-item ${isCur?'current':isDone?'done':''}">
-            <div class="tl-dot"></div>
-            <div class="tl-date">${item.date}</div>
-            <div class="tl-status">${item.status}${isCur?' ← いまここ':''}</div>
-            <div class="tl-memo">${item.memo}</div>
-          </div>`;
-        }).join('')}
+function appendTyping() {
+  const chat = document.getElementById('chatWrap');
+  const el = document.createElement('div');
+  el.className = 'msg-group';
+  el.id = 'typingIndicator';
+  el.innerHTML = `
+    <div class="bubble-row">
+      <div class="ai-icon">🤖</div>
+      <div class="typing-bubble">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
       </div>
     </div>`;
-}
-function renderProgressNext() {
-  document.getElementById('progressNextContent').innerHTML = `
-    <div class="next-card">
-      <div class="nc-label">📍 次にお客様にやっていただくこと</div>
-      <div class="nc-content">${CL.nextAction}</div>
-    </div>
-    <div class="info-card">
-      <h3>ご不明な場合は</h3>
-      <p style="font-size:15px;line-height:1.8;">何かわからないことがあれば、遠慮なく担当の先生にご連絡ください。</p>
-      <button class="btn btn-outline" style="margin-top:14px;" onclick="go('s-consult')">先生に相談する</button>
-    </div>
-    <div class="ai-note">ℹ️ 現在の状況では、まず上記の内容をご準備いただくことで手続きが前に進みます。個別の状況によって異なる場合がありますので、不明点は担当の先生にご確認ください。</div>`;
-}
-function renderProgressDate() {
-  document.getElementById('progressDateContent').innerHTML = `
-    <div class="info-card">
-      <h3>完了予定日（目安）</h3>
-      <div style="text-align:center;padding:20px 0;">
-        <div style="font-size:26px;font-weight:bold;color:var(--navy);">${CL.expectedDate}</div>
-        <p style="font-size:13px;color:var(--gray);margin-top:8px;">※書類・行政の審査状況によって変わる場合があります</p>
-      </div>
-    </div>
-    <div class="info-card">
-      <h3>現在の状況</h3>
-      <p style="font-size:16px;line-height:1.8;">現在「<strong>${CL.status}</strong>」の段階です。</p>
-      <p style="font-size:14px;color:var(--gray);margin-top:8px;line-height:1.7;">書類が全て揃い次第、担当の先生が申請準備を進めます。</p>
-    </div>
-    <div class="ai-note">ℹ️ 完了予定日はあくまでも目安です。最新の状況は担当の先生にご確認ください。</div>`;
+  chat.appendChild(el);
+  scrollBottom();
 }
 
-/* ── 不足書類 ── */
-function renderMissPending() {
-  const docs = CL.documents.filter(d => d.status==='未提出');
-  document.getElementById('missPendingList').innerHTML = docs.length ? docs.map(docRowHtml).join('') : emptyHtml('✅','未提出の書類はありません');
-}
-function renderMissResubmit() {
-  const docs = CL.documents.filter(d => d.status==='要再提出');
-  document.getElementById('missResubmitList').innerHTML = docs.length ? docs.map(docRowHtml).join('') : emptyHtml('✅','再提出が必要な書類はありません');
-}
-function renderMissAdd() {
-  document.getElementById('missAddList').innerHTML = emptyHtml('📋','現在、追加で必要な書類はありません') +
-    '<div class="notice" style="margin-top:18px;">追加書類が発生した場合は、担当の先生からお知らせします。</div>';
+function removeTyping() {
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
 }
 
-function emptyHtml(icon, msg) {
-  return `<div class="empty"><div class="ei">${icon}</div><p>${msg}</p></div>`;
-}
+function appendAI(text, choices = [], card = null) {
+  removeTyping();
+  const chat = document.getElementById('chatWrap');
+  const g = document.createElement('div');
+  g.className = 'msg-group';
 
-/* ── FAQ ── */
-const FAQ_LABELS = {cost:'💴 費用について',period:'⏱️ 期間について',docs:'📑 書類について',general:'❓ その他のご質問'};
-function showFaq(cat) {
-  document.getElementById('faqCatName').textContent   = FAQ_LABELS[cat]||'';
-  document.getElementById('faqDetailTitle').textContent = FAQ_LABELS[cat]||'よくある質問';
-  const items = getFaqs().filter(f => f.cat===cat);
-  document.getElementById('faqDetailList').innerHTML = items.length
-    ? items.map(f => `
-      <div class="faq-card" onclick="this.classList.toggle('open')">
-        <div class="faq-q"><span class="faq-q-text">${f.q}</span><span class="faq-arrow">▼</span></div>
-        <div class="faq-a">${f.a}</div>
-      </div>`).join('')
-    : '<p style="color:var(--gray)">現在登録されている質問はありません。</p>';
-  go('s-faq-detail');
-}
+  let inner = `
+    <div class="bubble-row">
+      <div class="ai-icon">🤖</div>
+      <div class="bubble ai">${escHtml(text)}</div>
+    </div>`;
 
-/* ── 相談フォーム ── */
-let consultType = 'message';
-function openConsultForm(type) {
-  consultType = type;
-  const map = {
-    message: ['メッセージ','✉️ メッセージを送る','ご質問・ご連絡内容'],
-    phone:   ['電話希望', '📱 電話希望を伝える','折り返し電話をご希望の旨・ご質問内容'],
-    meeting: ['面談希望', '🤝 面談希望を伝える','面談でご相談したい内容'],
-  };
-  const m = map[type];
-  document.getElementById('cfTitle').textContent        = m[0];
-  document.getElementById('cfHeading').textContent      = m[1];
-  document.getElementById('cfContentLabel').textContent = m[2];
-  document.getElementById('cfPhoneGroup').style.display   = type==='phone'   ? 'block' : 'none';
-  document.getElementById('cfMeetingGroup').style.display = type==='meeting' ? 'block' : 'none';
-  document.getElementById('cfSubject').value  = '';
-  document.getElementById('cfContent').value  = '';
-  go('s-consult-form');
-}
-function submitConsult() {
-  const content = document.getElementById('cfContent').value.trim();
-  if (!content) { toast('内容をご入力ください'); return; }
-  const consults = getConsults();
-  const labels = {message:'メッセージ',phone:'電話希望',meeting:'面談希望'};
-  consults.push({
-    id: Date.now(),
-    clientId: CL.id, clientName: CL.name,
-    type: consultType, typeLabel: labels[consultType],
-    subject: document.getElementById('cfSubject').value,
-    content,
-    phoneTime:   document.getElementById('cfPhoneTime').value,
-    meetingDate: document.getElementById('cfMeetingDate').value,
-    date: new Date().toISOString(),
-    isRead: false
-  });
-  saveConsults(consults);
-  go('s-consult-done');
-}
+  if (card) inner += card;
 
-/* ── Toast ── */
-function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2500);
-}
-
-/* ================================================
-   AI 音声チャットボット
-   ================================================ */
-let recognition = null;
-let isListening = false;
-let isSpeaking  = false;
-let chatInitialized = false;
-
-/* ── チャット画面が表示された時の初期化 ── */
-function initChat() {
-  if (chatInitialized) return;
-  chatInitialized = true;
-  const greeting = CL
-    ? `こんにちは、${CL.name.split(' ')[0]}様。若杉行政書士事務所のサポートAIです。書類・進捗・費用など、何でもお気軽にご質問ください。マイクボタンを押して話しかけるか、下の入力欄に文字を入力してください。`
-    : 'こんにちは。若杉行政書士事務所のサポートAIです。ご質問はマイクボタンを押して話しかけるか、文字で入力してください。';
-  addBubble('ai', greeting);
-  speak(greeting);
-}
-
-/* ── マイクのON/OFF ── */
-function toggleMic() {
-  if (isSpeaking) { window.speechSynthesis.cancel(); isSpeaking = false; }
-  if (isListening) { stopListening(); return; }
-  startListening();
-}
-
-function startListening() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    toast('このブラウザは音声入力に対応していません。ChromeまたはEdgeをお使いください。');
-    return;
+  if (choices.length > 0) {
+    inner += `<div class="choices">`;
+    choices.forEach(c => {
+      inner += `<button class="choice-btn" onclick="onChoiceClick(this, '${escAttr(c.text)}')">
+        <span class="choice-icon">${c.icon}</span>
+        <span class="choice-text">${escHtml(c.text)}</span>
+      </button>`;
+    });
+    inner += `</div>`;
   }
-  recognition = new SpeechRecognition();
-  recognition.lang = 'ja-JP';
-  recognition.continuous = false;
-  recognition.interimResults = true;
 
-  recognition.onstart = () => {
-    isListening = true;
-    setMicState('listening');
-    setVoiceStatus('🔴 聞いています… 話し終わったら少し待ってください');
-  };
+  g.innerHTML = inner;
+  chat.appendChild(g);
+  scrollBottom();
 
-  recognition.onresult = (e) => {
-    const interim = Array.from(e.results).map(r => r[0].transcript).join('');
-    setVoiceStatus(`"${interim}"`);
-    if (e.results[e.results.length - 1].isFinal) {
-      stopListening();
-      handleUserInput(interim.trim());
-    }
-  };
-
-  recognition.onerror = (e) => {
-    stopListening();
-    if (e.error === 'no-speech') setVoiceStatus('音声が聞き取れませんでした。もう一度お試しください。');
-    else toast('音声認識エラー: ' + e.error);
-  };
-
-  recognition.onend = () => { if (isListening) stopListening(); };
-  recognition.start();
+  // 音声読み上げ
+  speakText(text);
 }
 
-function stopListening() {
-  isListening = false;
-  if (recognition) { try { recognition.stop(); } catch(e){} recognition = null; }
-  setMicState('idle');
-  setVoiceStatus('');
+function onChoiceClick(btn, text) {
+  // 同グループのボタンを無効化
+  const group = btn.closest('.msg-group');
+  group.querySelectorAll('.choice-btn').forEach(b => {
+    b.classList.add('disabled');
+    if (b === btn) b.classList.add('selected');
+  });
+  handleInput(text);
 }
 
-function setMicState(state) {
-  const btn   = document.getElementById('micBtn');
-  const icon  = document.getElementById('micIcon');
-  const label = document.getElementById('micLabel');
-  btn.className = 'mic-btn' + (state === 'listening' ? ' listening' : state === 'speaking' ? ' speaking' : '');
-  const map = {
-    idle:      ['🎙️', 'マイクを押して話しかける'],
-    listening: ['🔴', '聞いています… (もう一度押すと停止)'],
-    speaking:  ['🔊', 'AIが回答中… (押すと停止)'],
-  };
-  icon.textContent  = map[state][0];
-  label.textContent = map[state][1];
+function scrollBottom() {
+  const chat = document.getElementById('chatWrap');
+  setTimeout(() => chat.scrollTop = chat.scrollHeight, 50);
 }
 
-function setVoiceStatus(msg) {
-  document.getElementById('voiceStatus').textContent = msg;
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+}
+function escAttr(s) {
+  return String(s).replace(/'/g,'&#39;').replace(/"/g,'&quot;');
 }
 
-/* ── テキスト送信 ── */
-function sendChatText() {
-  const input = document.getElementById('chatTextInput');
+// ──────────────────────────────────────────────
+// 入力ハンドラ
+// ──────────────────────────────────────────────
+function sendText() {
+  const input = document.getElementById('textInput');
   const text = input.value.trim();
   if (!text) return;
   input.value = '';
-  handleUserInput(text);
+  handleInput(text);
 }
 
-/* ── ユーザー入力を処理 ── */
-function handleUserInput(text) {
-  addBubble('user', text);
-  showTyping();
+function handleInput(text) {
+  // シート待機中
+  if (awaitingCase) { closeSheet('caseSheet'); awaitingCase = false; }
+  if (awaitingConsult) { closeSheet('consultSheet'); awaitingConsult = false; }
+
+  appendUser(text);
+
+  // 案件番号直接入力
+  const caseMatch = text.match(/WK[-－]?(\d+)/i);
+  if (caseMatch) {
+    const id = 'WK-' + String(parseInt(caseMatch[1])).padStart(3,'0');
+    appendTyping();
+    setTimeout(() => loginWithId(id), 800);
+    return;
+  }
+
+  // 特殊コマンド
+  const s = text.replace(/\s/g,'');
+  if (/案件番号を入力する/.test(s)) {
+    openSheet('caseSheet');
+    document.getElementById('caseInput').focus();
+    setTimeout(() => appendAI('案件番号入力フォームを開きました。\nWK-から始まる番号をご入力ください。', [
+      { icon: '🔙', text: 'トップへ戻る' }
+    ]), 100);
+    return;
+  }
+  if (/相談フォームに入力する/.test(s)) {
+    openSheet('consultSheet');
+    setTimeout(() => appendAI('相談申込フォームを開きました。\nご都合の良い日時などをご記入ください。', [
+      { icon: '🔙', text: 'トップへ戻る' }
+    ]), 100);
+    return;
+  }
+  if (/電話で(確認|予約)する/.test(s)) {
+    appendTyping();
+    setTimeout(() => appendAI('お電話番号はこちらです。\n\n📞 029-846-7050\n\n平日 9:00〜18:00 受付', [
+      { icon: '🗓️', text: '無料相談を申込む' },
+      { icon: '🏠', text: 'トップへ戻る' }
+    ]), 600);
+    return;
+  }
+  if (/無料相談を申込む/.test(s)) {
+    openSheet('consultSheet');
+    setTimeout(() => appendAI('相談申込フォームを開きました。', [
+      { icon: '🔙', text: 'トップへ戻る' }
+    ]), 100);
+    return;
+  }
+
+  // AI応答
+  appendTyping();
+  const delay = 600 + Math.random() * 400;
   setTimeout(() => {
-    removeTyping();
-    const response = getAIResponse(text);
-    addBubble('ai', response);
-    speak(response);
-  }, 700);
+    const resp = getAIResponse(text);
+    appendAI(resp.text, resp.choices || []);
+  }, delay);
 }
 
-/* ── チャットバブル追加 ── */
-function addBubble(role, text) {
-  const area = document.getElementById('chatArea');
-  const div = document.createElement('div');
-  div.className = 'chat-bubble bubble-' + role;
-  if (role === 'ai') div.innerHTML = `<div class="ai-label">🤖 若杉事務所 サポートAI</div>${text}`;
-  else div.textContent = text;
-  area.appendChild(div);
-  area.scrollTop = area.scrollHeight;
+// ──────────────────────────────────────────────
+// 案件確認
+// ──────────────────────────────────────────────
+function loginWithId(id) {
+  const raw = localStorage.getItem('wk_clients');
+  const clients = raw ? JSON.parse(raw) : [];
+  const client = clients.find(c => c.id === id || c.caseId === id);
+
+  if (!client) {
+    appendAI(`「${id}」の案件情報が見つかりませんでした。\n\n案件番号をご確認のうえ、もう一度お試しください。\nご不明な場合はお電話（029-846-7050）にてご確認いただけます。`, [
+      { icon: '🔑', text: '案件番号を入力する' },
+      { icon: '📞', text: '電話で確認する（029-846-7050）' },
+      { icon: '🏠', text: 'トップへ戻る' }
+    ]);
+    return;
+  }
+
+  currentClient = client;
+  const statusLabels = ['相談受付', '書類確認中', '申請準備中', '申請済み', '完了'];
+  const statusClass = ['status-0','status-1','status-2','status-3','status-4'];
+  const progressPct = [10, 35, 60, 85, 100];
+  const si = Number(client.status) || 0;
+  const statusLabel = statusLabels[si] || client.status || '確認中';
+  const pct = progressPct[si] || 10;
+  const sc = statusClass[si] || 'status-0';
+
+  const docs = Array.isArray(client.documents) ? client.documents : (client.docs || []);
+  const docsHtml = docs.length > 0
+    ? docs.map(d => {
+        const ok = d.submitted || d.checked;
+        return `<div class="case-row"><span class="case-key">${escHtml(d.name || d)}</span><span class="case-val">${ok ? '✅ 提出済み' : '⏳ 未提出'}</span></div>`;
+      }).join('')
+    : `<div class="case-row"><span class="case-key">担当者にご確認ください</span></div>`;
+
+  const card = `
+    <div class="case-card" style="margin-top:8px">
+      <div class="case-header">
+        <div class="case-avatar">👤</div>
+        <div>
+          <div class="case-name">${escHtml(client.name)} 様</div>
+          <div class="case-id">${escHtml(id)}</div>
+        </div>
+      </div>
+      <div class="case-row">
+        <span class="case-key">ご依頼内容</span>
+        <span class="case-val">${escHtml(client.category || client.service || '確認中')}</span>
+      </div>
+      <div class="case-row">
+        <span class="case-key">担当者</span>
+        <span class="case-val">${escHtml(client.staff || '若杉 行政書士')}</span>
+      </div>
+      <div class="case-row">
+        <span class="case-key">現在の状況</span>
+        <span class="case-val"><span class="status-badge ${sc}">${escHtml(statusLabel)}</span></span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div style="font-size:13px;color:var(--gray);margin-top:6px">進捗 ${pct}%</div>
+      <div style="margin-top:12px;font-size:14px;font-weight:700;color:var(--navy);margin-bottom:6px">書類の状況</div>
+      ${docsHtml}
+    </div>`;
+
+  appendAI(`${escHtml(client.name)} 様の案件情報をお知らせします。`, [
+    { icon: '❓', text: 'よくある質問を見る' },
+    { icon: '📞', text: '担当者に連絡する（029-846-7050）' },
+    { icon: '🏠', text: 'トップへ戻る' }
+  ], card);
 }
 
-let typingEl = null;
-function showTyping() {
-  const area = document.getElementById('chatArea');
-  typingEl = document.createElement('div');
-  typingEl.className = 'chat-bubble bubble-ai';
-  typingEl.innerHTML = '<div class="ai-label">🤖 若杉事務所 サポートAI</div><div class="typing-dot"><span></span><span></span><span></span></div>';
-  area.appendChild(typingEl);
-  area.scrollTop = area.scrollHeight;
+// ──────────────────────────────────────────────
+// シート操作
+// ──────────────────────────────────────────────
+function openSheet(id) {
+  document.getElementById(id).classList.add('open');
 }
-function removeTyping() {
-  if (typingEl) { typingEl.remove(); typingEl = null; }
+function closeSheet(id) {
+  document.getElementById(id).classList.remove('open');
 }
 
-/* ── 音声読み上げ ── */
-function speak(text) {
+function submitCase() {
+  const val = document.getElementById('caseInput').value.trim().toUpperCase();
+  closeSheet('caseSheet');
+  if (!val) return;
+  const id = val.startsWith('WK') ? val : 'WK-' + val;
+  appendUser(id);
+  appendTyping();
+  setTimeout(() => loginWithId(id), 800);
+}
+
+function submitConsult() {
+  const name = document.getElementById('consultName').value.trim();
+  const phone = document.getElementById('consultPhone').value.trim();
+  const type = document.getElementById('consultType').value;
+  const note = document.getElementById('consultNote').value.trim();
+
+  if (!name || !phone || !type) {
+    alert('お名前・電話番号・ご相談内容をご入力ください');
+    return;
+  }
+
+  const consults = JSON.parse(localStorage.getItem('wk_consultations') || '[]');
+  consults.push({
+    id: 'CS-' + Date.now(),
+    name, phone, type, note,
+    date: new Date().toISOString(),
+    status: 'new'
+  });
+  localStorage.setItem('wk_consultations', JSON.stringify(consults));
+
+  closeSheet('consultSheet');
+  appendAI(`${name} 様、ご相談のお申込みありがとうございます！\n\n担当者より1〜2営業日以内にご連絡いたします。\nお急ぎの場合は直接お電話ください。\n\n📞 029-846-7050`, [
+    { icon: '🏠', text: 'トップへ戻る' },
+    { icon: '📜', text: '相続・遺言のご相談' },
+    { icon: '🏢', text: '建設業許可・会社設立' }
+  ]);
+}
+
+// ──────────────────────────────────────────────
+// 音声入力
+// ──────────────────────────────────────────────
+let recognition = null;
+let isRecording = false;
+
+function toggleMic() {
+  if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    alert('お使いのブラウザは音声入力に対応していません。\nChrome または Safari をご利用ください。');
+    return;
+  }
+  if (isRecording) {
+    recognition && recognition.stop();
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'ja-JP';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onstart = () => {
+    isRecording = true;
+    document.getElementById('micBtn').classList.add('recording');
+    document.getElementById('micBtn').textContent = '⏹';
+  };
+  recognition.onresult = e => {
+    const txt = e.results[0][0].transcript;
+    document.getElementById('textInput').value = txt;
+    setTimeout(sendText, 200);
+  };
+  recognition.onend = () => {
+    isRecording = false;
+    document.getElementById('micBtn').classList.remove('recording');
+    document.getElementById('micBtn').textContent = '🎤';
+  };
+  recognition.onerror = () => {
+    isRecording = false;
+    document.getElementById('micBtn').classList.remove('recording');
+    document.getElementById('micBtn').textContent = '🎤';
+  };
+  recognition.start();
+}
+
+// ──────────────────────────────────────────────
+// 音声読み上げ
+// ──────────────────────────────────────────────
+function speakText(text) {
   if (!window.speechSynthesis) return;
+  const clean = text.replace(/[📜🏢📋💴📅🗓️✅⏳❓📞🏠🔑🔙📝🌐🎎🍜⚖️👤🤖😊▼①②③④⑤⑥]/gu, '')
+                    .replace(/【.*?】/g, '').replace(/\n/g,' ').trim();
+  const u = new SpeechSynthesisUtterance(clean.substring(0, 100));
+  u.lang = 'ja-JP';
+  u.rate = 0.95;
+  u.pitch = 1.1;
   window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.lang  = 'ja-JP';
-  utter.rate  = 0.95;
-  utter.pitch = 1.05;
-
-  // 日本語の声を優先選択
-  const voices = window.speechSynthesis.getVoices();
-  const jaVoice = voices.find(v => v.lang.startsWith('ja'));
-  if (jaVoice) utter.voice = jaVoice;
-
-  utter.onstart = () => { isSpeaking = true; setMicState('speaking'); };
-  utter.onend   = () => { isSpeaking = false; setMicState('idle'); };
-  utter.onerror = () => { isSpeaking = false; setMicState('idle'); };
-  window.speechSynthesis.speak(utter);
+  window.speechSynthesis.speak(u);
 }
 
-/* ================================================
-   AI 回答エンジン（キーワードマッチ）
-   ================================================ */
-/* ================================================
-   AI 回答エンジン v2（強化版）
-   ================================================ */
-
-/* 会話の流れを記憶する */
-let chatHistory = [];
-
-function getAIResponse(input) {
-  const t = input;
-  chatHistory.push(input);
-
-  /* ── 挨拶 ── */
-  if (/こんにちは|はじめまして|よろしく|おはよう|こんばんは|はじめる|スタート/.test(t)) {
-    const name = CL ? CL.name.split(' ')[0] + '様' : 'お客様';
-    const hints = CL ? `現在「${CL.status}」の段階です。` : '';
-    return `こんにちは、${name}。若杉行政書士事務所のサポートAIです。${hints}\n\n以下のことをお気軽にご質問ください。\n・書類の状況を教えて\n・今どの段階ですか\n・費用はいくらですか\n・いつ完了しますか\n・先生に相談したい`;
+// ──────────────────────────────────────────────
+// 初期化
+// ──────────────────────────────────────────────
+function init() {
+  // デモデータ初期化
+  if (!localStorage.getItem('wk_init')) {
+    const demo = [
+      {
+        id: 'WK-001', caseId: 'WK-001',
+        name: '田中 太郎',
+        category: '建設業許可',
+        service: '建設業許可',
+        status: 1,
+        staff: '若杉 行政書士',
+        documents: [
+          { name: '身分証明書', submitted: true },
+          { name: '登記事項証明書', submitted: true },
+          { name: '財務諸表', submitted: false },
+          { name: '工事実績証明書', submitted: false }
+        ]
+      },
+      {
+        id: 'WK-002', caseId: 'WK-002',
+        name: '李 美華',
+        category: '在留資格・ビザ申請',
+        service: '在留資格変更',
+        status: 2,
+        staff: '若杉 行政書士',
+        documents: [
+          { name: 'パスポートコピー', submitted: true },
+          { name: '在留カードコピー', submitted: true },
+          { name: '雇用契約書', submitted: true },
+          { name: '会社概要書', submitted: false }
+        ]
+      },
+      {
+        id: 'WK-003', caseId: 'WK-003',
+        name: '佐藤 花子',
+        category: '会社設立',
+        service: '株式会社設立',
+        status: 0,
+        staff: '若杉 行政書士',
+        documents: [
+          { name: '本人確認書類', submitted: false },
+          { name: '印鑑証明書', submitted: false }
+        ]
+      }
+    ];
+    localStorage.setItem('wk_clients', JSON.stringify(demo));
+    localStorage.setItem('wk_init', '1');
   }
 
-  /* ── 再提出・修正が必要な書類 ── */
-  if (/修正|再提出|直し|押印|判子|はんこ|署名|不備/.test(t)) {
-    if (!CL) return '案件番号でログインすると、書類の状況をご確認いただけます。';
-    const resubmit = CL.documents.filter(d => d.status === '要再提出');
-    if (resubmit.length === 0) return '現在、修正・再提出が必要な書類はございません。引き続きよろしくお願いいたします。';
-    const detail = resubmit.map(d => `・${d.name}${d.note ? `（${d.note}）` : ''}`).join('\n');
-    return `修正・再提出が必要な書類が${resubmit.length}件あります。\n\n${detail}\n\nお手数ですが、修正の上ご提出いただけますと幸いです。修正方法がわからない場合は担当の先生にご相談ください。`;
-  }
+  // 日時ラベル
+  const chat = document.getElementById('chatWrap');
+  const label = document.createElement('div');
+  label.className = 'time-label';
+  const d = new Date();
+  label.textContent = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${nowStr()}`;
+  chat.appendChild(label);
 
-  /* ── 進捗・現状 ── */
-  if (/進捗|状況|どうなって|今どこ|どの段階|いまどこ|どこまで|経過|今|現在|いま/.test(t)) {
-    if (!CL) return '案件番号でログインすると、進捗をご確認いただけます。';
-    const cur = CL.history[CL.history.length - 1];
-    const submitted = CL.documents.filter(d => d.status === '提出済み').length;
-    const total = CL.documents.length;
-    const pct = Math.round(submitted / total * 100);
-    return `現在の状況をお伝えします。\n\n📋 ステータス：${CL.status}\n📅 最終更新：${cur.date}\n📝 ${cur.memo}\n📄 書類進捗：${submitted}／${total}件 完了（${pct}%）\n\n次のステップ：${CL.nextAction}\n\n詳しくはホーム画面の「今の進捗を確認したい」からもご覧いただけます。`;
-  }
-
-  /* ── 不足書類・足りない ── */
-  if (/足りない|不足|まだ|未提出|出してない|出していない|揃って|そろって/.test(t)) {
-    if (!CL) return '案件番号でログインすると、不足書類をご確認いただけます。';
-    const missing = CL.documents.filter(d => d.status !== '提出済み');
-    if (missing.length === 0) return '✅ 素晴らしいです！現在、不足している書類はすべて揃っています。担当の先生が内容を確認し、次の手続きを進めています。';
-    const detail = missing.map(d => `・${d.name}（${d.status}）${d.note ? '\n  →' + d.note : ''}`).join('\n');
-    return `現在、${missing.length}件の書類をご準備いただく必要があります。\n\n${detail}\n\nお早めにご準備いただきますと、手続きがスムーズに進みます。ご不明な点は担当の先生にご確認ください。`;
-  }
-
-  /* ── 書類の全体像 ── */
-  if (/書類|必要な|提出|用意|何が|何を|準備|全部|一覧/.test(t)) {
-    if (!CL) return '案件番号でログインすると、必要書類の一覧をご確認いただけます。';
-    const submitted = CL.documents.filter(d => d.status === '提出済み').length;
-    const pending   = CL.documents.filter(d => d.status === '未提出').length;
-    const resubmit  = CL.documents.filter(d => d.status === '要再提出').length;
-    const total     = CL.documents.length;
-    return `${CL.category}の必要書類は合計${total}種類です。\n\n✅ 提出済み：${submitted}件\n⚠️ 未提出：${pending}件\n🔄 要修正：${resubmit}件\n\n${pending + resubmit > 0 ? `残り${pending + resubmit}件をお早めにご準備ください。` : '書類はすべて揃っています！'}\n\nホーム画面の「必要書類を確認したい」から詳細をご覧いただけます。`;
-  }
-
-  /* ── 費用・料金 ── */
-  if (/費用|料金|いくら|お金|値段|価格|報酬|高い|安い/.test(t)) {
-    const catFees = {
-      '建設業許可':           '一般的に報酬10〜15万円＋申請手数料（知事許可 9万円程度）',
-      '産業廃棄物収集運搬業許可': '一般的に報酬8〜12万円＋申請手数料',
-      '古物商許可':           '一般的に報酬3〜5万円＋申請手数料（1万9千円）',
-      '飲食店営業許可':       '一般的に報酬5〜8万円＋申請手数料',
-      '在留資格・ビザ申請':   '一般的に報酬5〜15万円（ビザの種類による）',
-      '会社設立':             '一般的に報酬5〜10万円＋公証役場・法務局費用（資本金により異なる）',
-      '相続・遺言':           '一般的に報酬5〜30万円（財産額・内容による）',
-    };
-    const fee = CL && catFees[CL.category] ? catFees[CL.category] : '手続きの内容によって異なります';
-    return `費用についてご案内します。\n\n${CL ? CL.category + 'の場合、' + fee + 'が目安です。' : '費用はお手続きの種類や難易度によって異なります。'}\n\n※上記はあくまでも一般的な目安です。若杉事務所の正確な費用は担当の先生に直接ご確認ください。\n\n一般的にお支払いは「着手時」と「完了時」の2回に分けることが多いです。`;
-  }
-
-  /* ── 期間・いつ完了 ── */
-  if (/期間|いつ|どのくらい|何日|何ヶ月|完了|終わる|いつごろ|予定|見込み/.test(t)) {
-    if (!CL) return '案件番号でログインすると、完了予定日をご確認いただけます。';
-    const catPeriods = {
-      '建設業許可':     '書類が揃ってから申請まで約1〜2週間、審査に約1〜2ヶ月',
-      '古物商許可':     '書類が揃ってから許可まで約40日',
-      '飲食店営業許可': '書類が揃ってから許可まで約2週間〜1ヶ月',
-      '在留資格・ビザ申請': '申請から審査完了まで約2〜3ヶ月',
-      '会社設立':       '手続き開始から設立完了まで約2〜3週間',
-      '相続・遺言':     '内容によって異なりますが、数週間〜数ヶ月',
-    };
-    const period = catPeriods[CL.category] || '手続きの種類によって異なります';
-    return `期間についてご案内します。\n\n📅 完了予定日（目安）：${CL.expectedDate}\n⏱️ ${CL.category}の一般的な目安：${period}\n📋 現在のステータス：${CL.status}\n\n書類が早く揃うほど、手続きも早く進みます。行政機関の審査期間は短縮できませんが、書類準備は早いほど有利です。\n\n最新の見込みは担当の先生にご確認ください。`;
-  }
-
-  /* ── 申請はいつ ── */
-  if (/申請|いつ申請|申請する|窓口|役所/.test(t)) {
-    if (!CL) return '申請の状況は案件番号でログインするとご確認いただけます。';
-    const applied = ['申請済み','審査中','許可完了','完了'].includes(CL.status);
-    if (applied) return `${CL.category}の申請は完了しています。現在「${CL.status}」の段階で、行政機関が審査を進めています。結果が出次第、担当の先生よりご連絡いたします。`;
-    return `${CL.category}の申請はまだ行っていない状況です。現在「${CL.status}」の段階です。\n\n必要書類が揃い次第、担当の先生が申請書類を作成して申請いたします。${CL.nextAction ? '\n\n今すぐやること：' + CL.nextAction : ''}`;
-  }
-
-  /* ── 許可・結果 ── */
-  if (/許可|結果|合格|不許可|却下|認可|取れ/.test(t)) {
-    if (!CL) return '許可の状況は案件番号でログインするとご確認いただけます。';
-    if (CL.status === '許可完了' || CL.status === '完了') {
-      return `おめでとうございます！${CL.category}の許可が取得できています。詳しくは担当の先生よりお伝えした内容をご確認ください。引き続きよろしくお願いいたします。`;
-    }
-    if (CL.status === '審査中') {
-      return `現在、行政機関が審査を進めています。審査結果が出次第、担当の先生よりご連絡いたします。審査期間中はしばらくお待ちください。`;
-    }
-    return `現在「${CL.status}」の段階で、まだ申請・審査には至っていません。書類が揃い次第、担当の先生が申請を進めます。`;
-  }
-
-  /* ── 先生への連絡・相談 ── */
-  if (/相談|電話|連絡|話したい|聞きたい|問い合わせ|先生|担当|メッセージ/.test(t)) {
-    return `担当の先生へのご連絡方法をご案内します。\n\n📱 このアプリから：\nホーム画面の「先生に相談したい」から\n・メッセージを送る\n・電話希望を伝える\n・面談希望を伝える\n\n📞 直接お電話：\n029-846-7050\n平日 9:00〜18:00\n\n📠 FAX：\n029-846-7051\n\nどの方法でもすぐに対応いたします。`;
-  }
-
-  /* ── 住民票 ── */
-  if (/住民票/.test(t)) {
-    return `住民票の取得方法をご案内します。\n\n🏛️ 役所の窓口：\nお住まいの市区町村の役所（市役所・区役所・町村役場）\n\n🏪 コンビニ：\nマイナンバーカードをお持ちであれば、セブン・ローソン・ファミマ等で取得できます（6:30〜23:00）\n\n⚠️ 注意点：\n・発行から3ヶ月以内のものが必要です\n・「本籍地の記載あり」が必要な場合もあります\n・「全員の記載」が必要な場合もあります\n\n詳しい記載内容は担当の先生にご確認ください。`;
-  }
-
-  /* ── 印鑑証明 ── */
-  if (/印鑑証明|印鑑登録/.test(t)) {
-    return `印鑑証明書の取得方法をご案内します。\n\n🏛️ 役所の窓口：\nお住まいの市区町村の役所窓口（印鑑登録カードが必要）\n\n🏪 コンビニ：\nマイナンバーカードをお持ちであれば取得できます\n\n⚠️ 注意点：\n・発行から3ヶ月以内のものが必要です\n・印鑑登録をまだしていない場合は、先に役所で登録が必要です\n\n詳しくは担当の先生にご確認ください。`;
-  }
-
-  /* ── 登記・法務局 ── */
-  if (/登記|法務局/.test(t)) {
-    return `登記簿謄本（登記事項証明書）の取得方法をご案内します。\n\n🏛️ 法務局の窓口：\n最寄りの法務局（登記所）\n茨城県は水戸地方法務局が管轄です\n\n💻 オンライン：\n「登記ねっと」で申請すると郵送で受け取れます\nhttps://www.touki-kyoutaku-online.moj.go.jp/\n\n⚠️ 注意点：\n・発行から3ヶ月以内のものが必要です\n・会社の登記と不動産の登記では窓口が異なります\n\n詳しくは担当の先生にご確認ください。`;
-  }
-
-  /* ── マイナンバーカード ── */
-  if (/マイナンバー|マイナカード/.test(t)) {
-    return `マイナンバーカードがあると、住民票・印鑑証明書・各種証明書をコンビニで取得でき、大変便利です。\n\n申請はお住まいの役所窓口か、スマホから「マイナポータル」で行えます。\n\nただし、お手続きへの使用については担当の先生にご確認ください。`;
-  }
-
-  /* ── 困った・わからない ── */
-  if (/困|わからない|わかりません|教えて|どうすれば|どうしたら/.test(t)) {
-    return `ご不安なことがあればいつでもお気軽にご相談ください。\n\n💬 このAIチャットでわかること：\n・書類の状況・取得方法\n・手続きの流れと期間\n・現在の進捗\n・費用の目安\n\n📞 担当の先生に直接確認：\nこのAIでは答えられない個別の内容は、担当の先生にご相談ください。\nTEL：029-846-7050（平日9時〜18時）\n\n「先生に相談したい」メニューからメッセージを送ることもできます。`;
-  }
-
-  /* ── ありがとう ── */
-  if (/ありがとう|助かり|感謝|よかった|安心/.test(t)) {
-    return `ありがとうございます。お役に立てて嬉しいです。\n\nお手続きがスムーズに進むよう、担当の先生も全力でサポートいたします。他にご不明な点があれば、いつでもお気軽にお声がけください。\n\n引き続きよろしくお願いいたします。`;
-  }
-
-  /* ── はい・わかった ── */
-  if (/^(はい|はい。|わかりました|了解|オッケー|ok|OK|承知)$/.test(t.trim())) {
-    return `ありがとうございます。他にご不明な点はございますか？\n\n・書類の状況を確認したい\n・進捗を確認したい\n・先生に相談したい\n\nいつでもお気軽にどうぞ。`;
-  }
-
-  /* ── デフォルト（賢いフォールバック） ── */
-  const suggestions = CL ? [
-    `「${CL.status}」の詳細を教えて`,
-    '不足書類を確認したい',
-    '完了はいつですか',
-    '先生に連絡したい',
-  ] : ['書類について教えて', '費用はいくら', '期間はどのくらい'];
-  const sug = suggestions.map(s => `・${s}`).join('\n');
-  return `「${input}」についてですね。このAIでお答えできる範囲を超えているか、もう少し具体的に教えていただけると助かります。\n\nたとえば、こんな質問ができます：\n${sug}\n\n個別の内容については、担当の先生に直接ご確認いただくことをお勧めします。\nTEL：029-846-7050（平日9時〜18時）`;
+  // 挨拶（少し遅延）
+  appendTyping();
+  setTimeout(() => {
+    appendAI(AI_KB.greeting.text, AI_KB.greeting.choices);
+  }, 1200);
 }
 
-
-/* ── 初期化 ── */
-window.addEventListener('load', () => {
-  initData();
-  const saved = localStorage.getItem('wk_current');
-  if (saved) {
-    const c = getClients().find(c => c.id===saved);
-    if (c) { CL = c; renderHome(); }
-  }
-  hist.push('s-login');
-  go('s-login', false);
-});
+init();
 </script>
 </body>
 </html>
